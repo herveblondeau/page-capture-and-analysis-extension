@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capture & Analyze Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="settings">
+      <header>
+        <h1>Extension Settings</h1>
+        <p>Configure the analysis endpoint required for captures.</p>
+      </header>
+
+      <form id="settingsForm">
+        <label>
+          <span>Analysis endpoint URL</span>
+          <input
+            id="endpointInput"
+            type="url"
+            name="endpoint"
+            placeholder="https://api.example.com/analysis"
+            required
+          />
+        </label>
+
+        <div class="actions">
+          <button id="saveSettingsButton" type="submit" disabled>Save</button>
+          <span id="optionsStatus" class="status"></span>
+        </div>
+      </form>
+    </main>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

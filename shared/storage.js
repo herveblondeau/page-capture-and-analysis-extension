@@ -1,16 +1,17 @@
-const STORAGE_KEY = 'pq:lastCapture';
+const CAPTURE_STORAGE_KEY = 'pq:lastCapture';
+export const SETTINGS_STORAGE_KEY = 'pq:settings';
 
 export async function loadLastCapture() {
-  const stored = await chrome.storage.local.get(STORAGE_KEY);
-  return stored[STORAGE_KEY] ?? null;
+  const stored = await chrome.storage.local.get(CAPTURE_STORAGE_KEY);
+  return stored[CAPTURE_STORAGE_KEY] ?? null;
 }
 
 export async function saveLastCapture(capture) {
-  await chrome.storage.local.set({ [STORAGE_KEY]: capture });
+  await chrome.storage.local.set({ [CAPTURE_STORAGE_KEY]: capture });
 }
 
 export async function clearLastCapture() {
-  await chrome.storage.local.remove(STORAGE_KEY);
+  await chrome.storage.local.remove(CAPTURE_STORAGE_KEY);
 }
 
 export function withUpdatedTimestamp(capture) {
@@ -18,4 +19,13 @@ export function withUpdatedTimestamp(capture) {
     ...(capture ?? {}),
     updatedAt: new Date().toISOString()
   };
+}
+
+export async function loadSettings() {
+  const stored = await chrome.storage.local.get(SETTINGS_STORAGE_KEY);
+  return stored[SETTINGS_STORAGE_KEY] ?? null;
+}
+
+export async function saveSettings(settings) {
+  await chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings });
 }

@@ -2,14 +2,18 @@ import {
   loadLastCapture,
   saveLastCapture,
   clearLastCapture,
-  withUpdatedTimestamp
+  withUpdatedTimestamp,
+  loadSettings,
+  SETTINGS_STORAGE_KEY
 } from '../shared/storage.js';
 
 const state = {
   mode: 'text',
   capture: null,
   analyzing: false,
-  instructions: ''
+  instructions: '',
+  capturing: false,
+  endpoint: ''
 };
 
 const ui = {
@@ -24,12 +28,13 @@ const ui = {
   statusLabel: document.getElementById('statusLabel'),
   resultPayload: document.getElementById('resultPayload'),
   copyButton: document.getElementById('copyResultButton'),
-  clearButton: document.getElementById('clearCaptureButton')
+  clearButton: document.getElementById('clearCaptureButton'),
+  settingsButton: document.getElementById('openSettingsButton')
 };
 
 init();
 
-function init() {
+async function init() {
   ui.modeButtons.forEach((button) =>
     button.addEventListener('click', () => setMode(button.dataset.mode))
   );
@@ -38,8 +43,11 @@ function init() {
   ui.instructionsInput.addEventListener('input', handleInstructionsInput);
   ui.clearButton.addEventListener('click', handleClearCapture);
   ui.copyButton.addEventListener('click', handleCopyResult);
+  ui.settingsButton.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-  restoreState();
+  await hydrateSettings();
+  await restoreState();
+  chrome.storage.onChanged.addListener(handleStorageChange);
 }
 
 async function restoreState() {
@@ -51,6 +59,7 @@ async function restoreState() {
     renderCaptureDetails();
   }
   syncAnalyzeButton();
+  syncCaptureButton();
 }
 
 function setMode(mode) {
@@ -61,7 +70,12 @@ function setMode(mode) {
 }
 
 async function handleCapture() {
+  if (!ensureEndpointConfigured()) {
+    return;
+  }
+
   ui.captureButton.disabled = true;
+  state.capturing = true;
   setStatus('Capturing…');
   try {
     const response = await chrome.runtime.sendMessage({
@@ -82,12 +96,16 @@ async function handleCapture() {
     console.error('[popup] Capture error', error);
     setStatus(error.message || 'Capture failed.', 'error');
   } finally {
-    ui.captureButton.disabled = false;
+    state.capturing = false;
+    syncCaptureButton();
     syncAnalyzeButton();
   }
 }
 
 async function handleAnalyze() {
+  if (!ensureEndpointConfigured()) {
+    return;
+  }
   if (!state.capture?.type) {
     setStatus('Capture something first.', 'error');
     return;
@@ -114,7 +132,7 @@ async function handleAnalyze() {
             }
     };
 
-    const response = await fetch('http://localhost:3000/analysis', {
+    const response = await fetch(state.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -184,6 +202,7 @@ function renderCaptureDetails() {
     ui.detailsContent.classList.add('empty');
     ui.imageMeta.classList.add('hidden');
     ui.clearButton.disabled = true;
+    renderResult();
     return;
   }
 
@@ -214,7 +233,12 @@ function renderCaptureDetails() {
 }
 
 function syncAnalyzeButton() {
-  ui.analyzeButton.disabled = !state.capture?.type || state.analyzing;
+  ui.analyzeButton.disabled =
+    !state.capture?.type || state.analyzing || !hasEndpointConfigured();
+}
+
+function syncCaptureButton() {
+  ui.captureButton.disabled = state.capturing || !hasEndpointConfigured();
 }
 
 function setStatus(message, type = 'neutral', payload = null) {
@@ -268,7 +292,11 @@ async function handleClearCapture() {
 
 function renderResult() {
   if (!state.capture?.analyzeResult) {
-    setStatus(state.capture ? 'Ready' : 'Idle', 'neutral');
+    if (hasEndpointConfigured()) {
+      setStatus(state.capture ? 'Ready' : 'Idle', 'neutral');
+    } else {
+      setStatus('Set the analysis endpoint in Settings to begin.', 'error');
+    }
     return;
   }
 
@@ -290,5 +318,36 @@ async function handleCopyResult() {
   } catch (error) {
     console.error('[popup] Copy failed', error);
     setStatus('Unable to copy result.', 'error');
+  }
+}
+
+function hasEndpointConfigured() {
+  return Boolean(state.endpoint);
+}
+
+function ensureEndpointConfigured() {
+  if (hasEndpointConfigured()) {
+    return true;
+  }
+  setStatus('Set the analysis endpoint in Settings to begin.', 'error');
+  return false;
+}
+
+async function hydrateSettings() {
+  const settings = await loadSettings();
+  state.endpoint = settings?.endpoint?.trim() || '';
+  syncCaptureButton();
+  syncAnalyzeButton();
+  if (!hasEndpointConfigured()) {
+    setStatus('Set the analysis endpoint in Settings to begin.', 'error');
+  }
+}
+
+function handleStorageChange(changes, areaName) {
+  if (areaName !== 'local') {
+    return;
+  }
+  if (changes[SETTINGS_STORAGE_KEY]) {
+    hydrateSettings();
   }
 }
