@@ -1,6 +1,7 @@
 import {
   loadLastCapture,
   saveLastCapture,
+  clearLastCapture,
   withUpdatedTimestamp
 } from '../shared/storage.js';
 
@@ -20,7 +21,8 @@ const ui = {
   detailsContent: document.getElementById('detailsContent'),
   imageMeta: document.getElementById('imageMeta'),
   instructionsInput: document.getElementById('instructionsInput'),
-  statusLabel: document.getElementById('statusLabel')
+  statusLabel: document.getElementById('statusLabel'),
+  clearButton: document.getElementById('clearCaptureButton')
 };
 
 init();
@@ -32,6 +34,7 @@ function init() {
   ui.captureButton.addEventListener('click', handleCapture);
   ui.analyzeButton.addEventListener('click', handleAnalyze);
   ui.instructionsInput.addEventListener('input', handleInstructionsInput);
+  ui.clearButton.addEventListener('click', handleClearCapture);
 
   restoreState();
 }
@@ -175,6 +178,7 @@ function renderCaptureDetails() {
       'Select text on the page or capture a screenshot region to get started.';
     ui.detailsContent.classList.add('empty');
     ui.imageMeta.classList.add('hidden');
+    ui.clearButton.disabled = true;
     return;
   }
 
@@ -210,6 +214,8 @@ function renderCaptureDetails() {
     result.textContent = state.capture.analyzeResult.message;
     ui.detailsContent.appendChild(result);
   }
+
+  ui.clearButton.disabled = false;
 }
 
 function syncAnalyzeButton() {
@@ -239,4 +245,17 @@ function formatTimestamp(timestamp) {
 async function getActiveTab() {
   console.warn('[popup] getActiveTab should not be called in window mode');
   return null;
+}
+
+async function handleClearCapture() {
+  if (!state.capture) {
+    return;
+  }
+  state.capture = null;
+  state.instructions = '';
+  ui.instructionsInput.value = '';
+  await clearLastCapture();
+  renderCaptureDetails();
+  syncAnalyzeButton();
+  setStatus('Capture cleared.');
 }

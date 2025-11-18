@@ -115,6 +115,23 @@ button.secondary {
   border: 1px solid var(--border);
 }
 
+.tertiary {
+  align-self: flex-end;
+  margin-top: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: none;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.tertiary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
