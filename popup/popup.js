@@ -63,89 +63,29 @@ async function handleCapture() {
       throw new Error('No active tab found.');
     }
 
-    let capture;
-    if (state.mode === 'text') {
-      capture = await captureSelectedText(tab);
-    } else {
-      capture = await captureRegionImage(tab);
+    console.log('[popup] Starting capture', { mode: state.mode, tabId: tab.id });
+    const response = await chrome.runtime.sendMessage({
+      type: 'START_CAPTURE',
+      mode: state.mode,
+      tabId: tab.id,
+      instructions: state.instructions
+    });
+
+    if (!response?.ok) {
+      console.warn('[popup] Capture failed response', response);
+      throw new Error(response?.error || 'Capture failed.');
     }
 
-    state.capture = {
-      ...capture,
-      instructions: state.instructions,
-      source: {
-        url: tab.url,
-        title: tab.title
-      },
-      timestamp: new Date().toISOString()
-    };
-
-    await saveLastCapture(withUpdatedTimestamp(state.capture));
+    state.capture = response.capture;
+    console.log('[popup] Capture success', state.capture);
     renderCaptureDetails();
     setStatus('Capture saved.', 'success');
   } catch (error) {
-    console.error(error);
+    console.error('[popup] Capture error', error);
     setStatus(error.message || 'Capture failed.', 'error');
   } finally {
     ui.captureButton.disabled = false;
     syncAnalyzeButton();
-  }
-}
-
-async function captureSelectedText(tab) {
-  const [result] = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: () => window.getSelection()?.toString() ?? ''
-  });
-  const text = (result?.result || '').trim();
-  if (!text) {
-    throw new Error('Select some text on the page first.');
-  }
-  return {
-    type: 'text',
-    text
-  };
-}
-
-async function captureRegionImage(tab) {
-  const regionResponse = await requestRegionCapture(tab.id);
-  if (!regionResponse?.ok) {
-    throw new Error(regionResponse?.error || 'Region capture cancelled.');
-  }
-
-  const captureResponse = await chrome.runtime.sendMessage({
-    type: 'CAPTURE_REGION_IMAGE',
-    tabId: tab.id,
-    region: regionResponse.region
-  });
-
-  if (!captureResponse?.ok) {
-    throw new Error(captureResponse?.error || 'Unable to capture image.');
-  }
-
-  return captureResponse.payload;
-}
-
-async function requestRegionCapture(tabId) {
-  try {
-    return await chrome.tabs.sendMessage(tabId, {
-      type: 'START_REGION_CAPTURE'
-    });
-  } catch (error) {
-    const missingReceiver =
-      error?.message && error.message.includes('Receiving end does not exist');
-    if (!missingReceiver) {
-      throw error;
-    }
-
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['content/regionCapture.js']
-    });
-
-    return chrome.tabs.sendMessage(tabId, {
-      type: 'START_REGION_CAPTURE'
-    });
   }
 }
 
@@ -176,6 +116,7 @@ async function handleAnalyze() {
             }
     };
 
+    console.log('[popup] Sending analyze request', body);
     const response = await fetch('http://localhost:3000/analysis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -199,10 +140,11 @@ async function handleAnalyze() {
     };
     await saveLastCapture(withUpdatedTimestamp(state.capture));
 
+    console.log('[popup] Analyze response', state.capture.analyzeResult);
     renderCaptureDetails();
     setStatus(message, success ? 'success' : 'error');
   } catch (error) {
-    console.error(error);
+    console.error('[popup] Analyze error', error);
     setStatus(error.message || 'Analyze failed.', 'error');
   } finally {
     state.analyzing = false;
@@ -219,8 +161,11 @@ let instructionsSaveHandle;
 function persistInstructions() {
   window.clearTimeout(instructionsSaveHandle);
   instructionsSaveHandle = window.setTimeout(async () => {
+    if (!state.capture) {
+      return;
+    }
     state.capture = {
-      ...(state.capture || {}),
+      ...state.capture,
       instructions: state.instructions
     };
     await saveLastCapture(withUpdatedTimestamp(state.capture));
@@ -302,5 +247,6 @@ async function getActiveTab() {
     active: true,
     currentWindow: true
   });
+  console.log('[popup] Active tab', tab?.id, tab?.url);
   return tab;
 }

@@ -93,8 +93,9 @@
     overlay?.removeEventListener('mousemove', handleMouseMove);
 
     if (!selectionBox) {
+      const rejectFn = activeReject;
       cleanup();
-      activeReject?.(new Error('Selection unavailable'));
+      rejectFn?.(new Error('Selection unavailable'));
       return;
     }
 
@@ -102,8 +103,9 @@
     const height = Math.abs(event.clientY - startY);
 
     if (width < 5 || height < 5) {
+      const rejectFn = activeReject;
       cleanup();
-      activeReject?.(new Error('Selection too small'));
+      rejectFn?.(new Error('Selection too small'));
       return;
     }
 
@@ -115,8 +117,9 @@
       devicePixelRatio: window.devicePixelRatio
     };
 
+    const resolveFn = activeResolve;
     cleanup();
-    activeResolve?.(region);
+    resolveFn?.(region);
   }
 
   function updateSelection(event) {
@@ -137,8 +140,9 @@
   }
 
   function cancelSelection() {
+    const rejectFn = activeReject;
     cleanup();
-    activeReject?.(new Error('Selection cancelled'));
+    rejectFn?.(new Error('Selection cancelled'));
   }
 
   function cleanup() {

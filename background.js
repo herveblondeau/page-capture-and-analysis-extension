@@ -1,4 +1,8 @@
-import { loadLastCapture, saveLastCapture, withUpdatedTimestamp } from './shared/storage.js';
+import {
+  loadLastCapture,
+  saveLastCapture,
+  withUpdatedTimestamp
+} from './shared/storage.js';
 
 chrome.runtime.onInstalled.addListener(async () => {
   const existing = await loadLastCapture();
@@ -17,15 +21,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   switch (message.type) {
-    case 'CAPTURE_REGION_IMAGE': {
-      handleRegionImageCapture(message)
-        .then((payload) => sendResponse({ ok: true, payload }))
-        .catch((error) => sendResponse({ ok: false, error: error.message }));
-      return true;
-    }
-    case 'SAVE_CAPTURE': {
-      persistCapture(message.capture)
-        .then(() => sendResponse({ ok: true }))
+    case 'START_CAPTURE': {
+      console.log('[background] START_CAPTURE received', {
+        sender: sender?.id,
+        mode: message.mode,
+        tabId: message.tabId
+      });
+      handleStartCapture(message)
+        .then((capture) => sendResponse({ ok: true, capture }))
         .catch((error) => sendResponse({ ok: false, error: error.message }));
       return true;
     }
@@ -38,24 +41,125 @@ async function persistCapture(capture) {
   if (!capture) {
     throw new Error('Capture payload missing');
   }
+  console.log('[background] Persisting capture', {
+    type: capture.type,
+    timestamp: capture.timestamp
+  });
   await saveLastCapture(withUpdatedTimestamp(capture));
 }
 
-async function handleRegionImageCapture(message) {
-  const { tabId, region } = message;
+async function handleStartCapture(message) {
+  const { mode, tabId, instructions } = message;
   if (typeof tabId !== 'number') {
     throw new Error('tabId missing');
   }
+
+  const tab = await chrome.tabs.get(tabId);
+  if (!tab) {
+    throw new Error('Tab unavailable');
+  }
+
+  console.log('[background] Beginning capture', {
+    mode,
+    tabId,
+    url: tab.url
+  });
+
+  let capturePayload;
+  if (mode === 'image') {
+    const region = await requestRegionCapture(tabId);
+    if (!region?.ok) {
+      console.warn('[background] Region capture failed response', region);
+      throw new Error(region?.error || 'Region capture cancelled.');
+    }
+    console.log('[background] Region capture resolved', region.region);
+    capturePayload = await handleRegionImageCapture(tab, region.region);
+  } else {
+    capturePayload = await captureSelectedText(tabId);
+  }
+
+  const record = {
+    ...capturePayload,
+    instructions: instructions ?? '',
+    source: {
+      url: tab.url,
+      title: tab.title
+    },
+    timestamp: new Date().toISOString()
+  };
+
+  console.log('[background] Capture payload ready', {
+    type: record.type,
+    hasImage: Boolean(record.imageDataUrl),
+    textLength: record.text?.length
+  });
+  await persistCapture(record);
+  return record;
+}
+
+async function captureSelectedText(tabId) {
+  console.log('[background] Capturing selected text');
+  const [result] = await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => window.getSelection()?.toString() ?? ''
+  });
+  const text = (result?.result || '').trim();
+  if (!text) {
+    throw new Error('Select some text on the page first.');
+  }
+  console.log('[background] Selected text length', text.length);
+  return {
+    type: 'text',
+    text
+  };
+}
+
+async function requestRegionCapture(tabId) {
+  try {
+    console.log('[background] Requesting region capture');
+    return await chrome.tabs.sendMessage(tabId, {
+      type: 'START_REGION_CAPTURE'
+    });
+  } catch (error) {
+    console.warn('[background] Region capture message failed, retrying', error);
+    const missingReceiver =
+      error?.message && error.message.includes('Receiving end does not exist');
+    if (!missingReceiver) {
+      throw error;
+    }
+
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['content/regionCapture.js']
+    });
+    console.log('[background] Region capture script injected, retrying');
+
+    return chrome.tabs.sendMessage(tabId, {
+      type: 'START_REGION_CAPTURE'
+    });
+  }
+}
+
+async function handleRegionImageCapture(tab, region) {
   if (!region) {
     throw new Error('Region missing');
   }
 
-  const tab = await chrome.tabs.get(tabId);
+  console.log('[background] Capturing visible tab', {
+    windowId: tab.windowId,
+    region
+  });
   const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
     format: 'png'
   });
 
   const cropped = await cropDataUrlToRegion(dataUrl, region);
+  console.log('[background] Image cropped', {
+    cssWidth: region.width,
+    cssHeight: region.height,
+    pixelWidth: cropped.pixelWidth,
+    pixelHeight: cropped.pixelHeight
+  });
   return {
     type: 'image',
     imageDataUrl: cropped.dataUrl,
@@ -83,6 +187,10 @@ async function cropDataUrlToRegion(dataUrl, region) {
   const croppedBlob = await canvas.convertToBlob({ type: 'image/png' });
   const croppedDataUrl = await blobToDataUrl(croppedBlob);
 
+  console.log('[background] cropDataUrlToRegion complete', {
+    sw,
+    sh
+  });
   return {
     dataUrl: croppedDataUrl,
     pixelWidth: sw,
