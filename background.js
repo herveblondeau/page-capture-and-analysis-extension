@@ -4,6 +4,14 @@ import {
   withUpdatedTimestamp
 } from './shared/storage.js';
 
+const WINDOW_DIMENSIONS = {
+  width: 420,
+  height: 620
+};
+
+let captureWindowId = null;
+let latestPageTabId = null;
+
 chrome.runtime.onInstalled.addListener(async () => {
   const existing = await loadLastCapture();
   if (!existing) {
@@ -37,6 +45,97 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+chrome.action.onClicked.addListener(async (tab) => {
+  trackPotentialPageTab(tab);
+  if (captureWindowId) {
+    try {
+      await chrome.windows.update(captureWindowId, { focused: true });
+      return;
+    } catch (error) {
+      console.warn('[background] Failed to focus capture window, reopening', error);
+    }
+  }
+  await openCaptureWindow();
+});
+
+chrome.windows.onRemoved.addListener((windowId) => {
+  if (windowId === captureWindowId) {
+    captureWindowId = null;
+  }
+});
+
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    trackPotentialPageTab(tab);
+  } catch (error) {
+    console.warn('[background] Failed to inspect activated tab', error);
+  }
+});
+
+async function openCaptureWindow() {
+  const url = chrome.runtime.getURL('popup/index.html');
+  const window = await chrome.windows.create({
+    url,
+    type: 'popup',
+    width: WINDOW_DIMENSIONS.width,
+    height: WINDOW_DIMENSIONS.height
+  });
+  captureWindowId = window.id ?? null;
+  console.log('[background] Capture window opened', captureWindowId);
+}
+
+function trackPotentialPageTab(tab) {
+  if (!isPageTab(tab)) {
+    return;
+  }
+  latestPageTabId = tab.id;
+}
+
+function isPageTab(tab) {
+  if (!tab || typeof tab.id !== 'number') {
+    return false;
+  }
+  if (!tab.url) {
+    return true;
+  }
+  return !tab.url.startsWith('chrome-extension://');
+}
+
+async function resolveTargetTabId(requestedTabId) {
+  if (typeof requestedTabId === 'number') {
+    return requestedTabId;
+  }
+  if (latestPageTabId) {
+    try {
+      const tab = await chrome.tabs.get(latestPageTabId);
+      if (isPageTab(tab)) {
+        return tab.id;
+      }
+    } catch (error) {
+      console.warn('[background] Failed to use cached tab id', error);
+    }
+  }
+
+  const lastFocused = await chrome.windows.getLastFocused({ populate: true });
+  if (lastFocused?.tabs) {
+    const candidate = lastFocused.tabs.find((t) => t.active && isPageTab(t));
+    if (candidate) {
+      latestPageTabId = candidate.id;
+      return candidate.id;
+    }
+  }
+
+  const activeNormals = await chrome.tabs.query({ active: true, windowType: 'normal' });
+  const fallback = activeNormals.find((t) => isPageTab(t));
+  if (fallback) {
+    latestPageTabId = fallback.id;
+    return fallback.id;
+  }
+
+  throw new Error('No suitable tab to capture. Focus a webpage and try again.');
+}
+
 async function persistCapture(capture) {
   if (!capture) {
     throw new Error('Capture payload missing');
@@ -49,25 +148,23 @@ async function persistCapture(capture) {
 }
 
 async function handleStartCapture(message) {
-  const { mode, tabId, instructions } = message;
-  if (typeof tabId !== 'number') {
-    throw new Error('tabId missing');
-  }
-
-  const tab = await chrome.tabs.get(tabId);
+  const { mode, tabId: requestedTabId, instructions } = message;
+  const targetTabId = await resolveTargetTabId(requestedTabId);
+  const tab = await chrome.tabs.get(targetTabId);
   if (!tab) {
     throw new Error('Tab unavailable');
   }
 
   console.log('[background] Beginning capture', {
     mode,
-    tabId,
+    tabId: targetTabId,
     url: tab.url
   });
 
   let capturePayload;
   if (mode === 'image') {
-    const region = await requestRegionCapture(tabId);
+    await chrome.tabs.update(targetTabId, { active: true });
+    const region = await requestRegionCapture(targetTabId);
     if (!region?.ok) {
       console.warn('[background] Region capture failed response', region);
       throw new Error(region?.error || 'Region capture cancelled.');
@@ -75,7 +172,8 @@ async function handleStartCapture(message) {
     console.log('[background] Region capture resolved', region.region);
     capturePayload = await handleRegionImageCapture(tab, region.region);
   } else {
-    capturePayload = await captureSelectedText(tabId);
+    await chrome.tabs.update(targetTabId, { active: true });
+    capturePayload = await captureSelectedText(targetTabId);
   }
 
   const record = {

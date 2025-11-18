@@ -18,7 +18,6 @@
     "type": "module"
   },
   "action": {
-    "default_popup": "popup/index.html",
     "default_title": "Capture & Analyze"
   },
   "content_scripts": [

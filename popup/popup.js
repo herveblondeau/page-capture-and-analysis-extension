@@ -58,16 +58,10 @@ async function handleCapture() {
   ui.captureButton.disabled = true;
   setStatus('Capturing…');
   try {
-    const tab = await getActiveTab();
-    if (!tab?.id) {
-      throw new Error('No active tab found.');
-    }
-
-    console.log('[popup] Starting capture', { mode: state.mode, tabId: tab.id });
+    console.log('[popup] Starting capture', { mode: state.mode });
     const response = await chrome.runtime.sendMessage({
       type: 'START_CAPTURE',
       mode: state.mode,
-      tabId: tab.id,
       instructions: state.instructions
     });
 
@@ -243,10 +237,6 @@ function formatTimestamp(timestamp) {
 }
 
 async function getActiveTab() {
-  const [tab] = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  });
-  console.log('[popup] Active tab', tab?.id, tab?.url);
-  return tab;
+  console.warn('[popup] getActiveTab should not be called in window mode');
+  return null;
 }
