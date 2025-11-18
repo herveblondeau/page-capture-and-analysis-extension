@@ -30,11 +30,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   switch (message.type) {
     case 'START_CAPTURE': {
-      console.log('[background] START_CAPTURE received', {
-        sender: sender?.id,
-        mode: message.mode,
-        tabId: message.tabId
-      });
       handleStartCapture(message)
         .then((capture) => sendResponse({ ok: true, capture }))
         .catch((error) => sendResponse({ ok: false, error: error.message }));
@@ -82,7 +77,6 @@ async function openCaptureWindow() {
     height: WINDOW_DIMENSIONS.height
   });
   captureWindowId = window.id ?? null;
-  console.log('[background] Capture window opened', captureWindowId);
 }
 
 function trackPotentialPageTab(tab) {
@@ -140,10 +134,6 @@ async function persistCapture(capture) {
   if (!capture) {
     throw new Error('Capture payload missing');
   }
-  console.log('[background] Persisting capture', {
-    type: capture.type,
-    timestamp: capture.timestamp
-  });
   await saveLastCapture(withUpdatedTimestamp(capture));
 }
 
@@ -155,12 +145,6 @@ async function handleStartCapture(message) {
     throw new Error('Tab unavailable');
   }
 
-  console.log('[background] Beginning capture', {
-    mode,
-    tabId: targetTabId,
-    url: tab.url
-  });
-
   let capturePayload;
   if (mode === 'image') {
     await focusTabAndWindow(tab);
@@ -169,7 +153,6 @@ async function handleStartCapture(message) {
       console.warn('[background] Region capture failed response', region);
       throw new Error(region?.error || 'Region capture cancelled.');
     }
-    console.log('[background] Region capture resolved', region.region);
     capturePayload = await handleRegionImageCapture(tab, region.region);
   } else {
     await focusTabAndWindow(tab);
@@ -186,17 +169,11 @@ async function handleStartCapture(message) {
     timestamp: new Date().toISOString()
   };
 
-  console.log('[background] Capture payload ready', {
-    type: record.type,
-    hasImage: Boolean(record.imageDataUrl),
-    textLength: record.text?.length
-  });
   await persistCapture(record);
   return record;
 }
 
 async function captureSelectedText(tabId) {
-  console.log('[background] Capturing selected text');
   const [result] = await chrome.scripting.executeScript({
     target: { tabId },
     func: () => window.getSelection()?.toString() ?? ''
@@ -205,7 +182,6 @@ async function captureSelectedText(tabId) {
   if (!text) {
     throw new Error('Select some text on the page first.');
   }
-  console.log('[background] Selected text length', text.length);
   return {
     type: 'text',
     text
@@ -214,7 +190,6 @@ async function captureSelectedText(tabId) {
 
 async function requestRegionCapture(tabId) {
   try {
-    console.log('[background] Requesting region capture');
     return await chrome.tabs.sendMessage(tabId, {
       type: 'START_REGION_CAPTURE'
     });
@@ -230,8 +205,6 @@ async function requestRegionCapture(tabId) {
       target: { tabId },
       files: ['content/regionCapture.js']
     });
-    console.log('[background] Region capture script injected, retrying');
-
     return chrome.tabs.sendMessage(tabId, {
       type: 'START_REGION_CAPTURE'
     });
@@ -243,21 +216,11 @@ async function handleRegionImageCapture(tab, region) {
     throw new Error('Region missing');
   }
 
-  console.log('[background] Capturing visible tab', {
-    windowId: tab.windowId,
-    region
-  });
   const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
     format: 'png'
   });
 
   const cropped = await cropDataUrlToRegion(dataUrl, region);
-  console.log('[background] Image cropped', {
-    cssWidth: region.width,
-    cssHeight: region.height,
-    pixelWidth: cropped.pixelWidth,
-    pixelHeight: cropped.pixelHeight
-  });
   return {
     type: 'image',
     imageDataUrl: cropped.dataUrl,
@@ -291,10 +254,6 @@ async function cropDataUrlToRegion(dataUrl, region) {
   const croppedBlob = await canvas.convertToBlob({ type: 'image/png' });
   const croppedDataUrl = await blobToDataUrl(croppedBlob);
 
-  console.log('[background] cropDataUrlToRegion complete', {
-    sw,
-    sh
-  });
   return {
     dataUrl: croppedDataUrl,
     pixelWidth: sw,

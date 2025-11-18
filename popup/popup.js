@@ -64,7 +64,6 @@ async function handleCapture() {
   ui.captureButton.disabled = true;
   setStatus('Capturing…');
   try {
-    console.log('[popup] Starting capture', { mode: state.mode });
     const response = await chrome.runtime.sendMessage({
       type: 'START_CAPTURE',
       mode: state.mode,
@@ -77,7 +76,6 @@ async function handleCapture() {
     }
 
     state.capture = response.capture;
-    console.log('[popup] Capture success', state.capture);
     renderCaptureDetails();
     setStatus('Capture saved.', 'success');
   } catch (error) {
@@ -116,7 +114,6 @@ async function handleAnalyze() {
             }
     };
 
-    console.log('[popup] Sending analyze request', body);
     const response = await fetch('http://localhost:3000/analysis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -142,7 +139,6 @@ async function handleAnalyze() {
     };
     await saveLastCapture(withUpdatedTimestamp(state.capture));
 
-    console.log('[popup] Analyze response', state.capture.analyzeResult);
     renderCaptureDetails();
     setStatus(
       success ? 'Analysis complete.' : message,

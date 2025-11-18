@@ -1,6 +1,4 @@
-console.log('[content] regionCapture.js loaded 1');
 (function () {
-  console.log('[content] regionCapture.js loaded 2');
   if (window.__pqRegionCaptureListener) {
     chrome.runtime.onMessage.removeListener(window.__pqRegionCaptureListener);
   }
@@ -27,7 +25,6 @@ console.log('[content] regionCapture.js loaded 1');
   window.__pqRegionCaptureListener = listener;
 
   function startRegionSelection() {
-    console.log('[content] Starting region selection');
     if (overlay) {
       return Promise.reject(new Error('Capture already in progress'));
     }
@@ -74,12 +71,10 @@ console.log('[content] regionCapture.js loaded 1');
     instruction.addEventListener('click', cancelSelection);
     overlay.appendChild(instruction);
 
-    console.log('[content] Adding event listeners');
     overlay.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp, { once: true });
     document.addEventListener('keydown', handleKeyDown, { once: false });
 
-    console.log('[content] Adding overlay to body');
     document.body.appendChild(overlay);
   }
 
@@ -98,7 +93,6 @@ console.log('[content] regionCapture.js loaded 1');
   }
 
   function handleMouseUp(event) {
-    console.log('[content] Mouse up event');
     overlay?.removeEventListener('mousemove', handleMouseMove);
 
     if (!selectionBox) {
@@ -155,14 +149,12 @@ console.log('[content] regionCapture.js loaded 1');
   }
 
   function handleKeyDown(event) {
-    console.log('[content] Key down event', event.key);
     if (event.key === 'Escape') {
       cancelSelection();
     }
   }
 
   function cleanup() {
-    console.log('[content] Cleaning up');
     overlay?.removeEventListener('mousedown', handleMouseDown);
     document.removeEventListener('keydown', handleKeyDown);
     overlay?.remove();
