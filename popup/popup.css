@@ -213,16 +213,34 @@ button:disabled {
   background: var(--surface);
 }
 
-.status {
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 13px;
   color: var(--muted);
-  min-height: 20px;
 }
 
-.status.success {
+.result.success #statusLabel {
   color: var(--success);
 }
 
-.status.error {
+.result.error #statusLabel {
   color: var(--error);
+}
+
+.result-payload {
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 8px;
+  background: var(--surface);
+  max-height: 160px;
+  overflow: auto;
+  color: var(--fg);
+}
+
+.result-payload.hidden {
+  display: none;
 }

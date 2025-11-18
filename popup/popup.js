@@ -22,6 +22,7 @@ const ui = {
   imageMeta: document.getElementById('imageMeta'),
   instructionsInput: document.getElementById('instructionsInput'),
   statusLabel: document.getElementById('statusLabel'),
+  resultPayload: document.getElementById('resultPayload'),
   clearButton: document.getElementById('clearCaptureButton')
 };
 
@@ -126,20 +127,26 @@ async function handleAnalyze() {
 
     const payload = await response.json();
     const success = payload?.success === true;
-    const message = payload?.message || (success ? 'Analysis complete.' : 'Analysis failed.');
+    const message =
+      payload?.message || (success ? 'Analysis complete.' : 'Analysis failed.');
 
     state.capture = {
       ...state.capture,
       analyzeResult: {
         success,
-        message
+        message,
+        payload
       }
     };
     await saveLastCapture(withUpdatedTimestamp(state.capture));
 
     console.log('[popup] Analyze response', state.capture.analyzeResult);
     renderCaptureDetails();
-    setStatus(message, success ? 'success' : 'error');
+    setStatus(
+      success ? 'Analysis complete.' : message,
+      success ? 'success' : 'error',
+      payload
+    );
   } catch (error) {
     console.error('[popup] Analyze error', error);
     setStatus(error.message || 'Analyze failed.', 'error');
@@ -203,17 +210,7 @@ function renderCaptureDetails() {
     ui.imageMeta.classList.remove('hidden');
   }
 
-  if (state.capture.analyzeResult) {
-    const result = document.createElement('div');
-    result.className = 'analysis-result';
-    result.style.marginTop = '8px';
-    result.style.fontSize = '12px';
-    result.style.color = state.capture.analyzeResult.success
-      ? 'var(--success)'
-      : 'var(--error)';
-    result.textContent = state.capture.analyzeResult.message;
-    ui.detailsContent.appendChild(result);
-  }
+  renderResult();
 
   ui.clearButton.disabled = false;
 }
@@ -222,13 +219,22 @@ function syncAnalyzeButton() {
   ui.analyzeButton.disabled = !state.capture?.type || state.analyzing;
 }
 
-function setStatus(message, type = 'neutral') {
+function setStatus(message, type = 'neutral', payload = null) {
   ui.statusLabel.textContent = message;
-  ui.statusLabel.parentElement.classList.remove('success', 'error');
+  const container = ui.statusLabel.parentElement;
+  container.classList.remove('success', 'error');
   if (type === 'success') {
-    ui.statusLabel.parentElement.classList.add('success');
+    container.classList.add('success');
   } else if (type === 'error') {
-    ui.statusLabel.parentElement.classList.add('error');
+    container.classList.add('error');
+  }
+
+  if (type === 'success' && payload) {
+    ui.resultPayload.textContent = JSON.stringify(payload, null, 2);
+    ui.resultPayload.classList.remove('hidden');
+  } else {
+    ui.resultPayload.textContent = '';
+    ui.resultPayload.classList.add('hidden');
   }
 }
 
@@ -258,4 +264,18 @@ async function handleClearCapture() {
   renderCaptureDetails();
   syncAnalyzeButton();
   setStatus('Capture cleared.');
+}
+
+function renderResult() {
+  if (!state.capture?.analyzeResult) {
+    setStatus(state.capture ? 'Ready' : 'Idle', 'neutral');
+    return;
+  }
+
+  const { analyzeResult } = state.capture;
+  if (analyzeResult.success) {
+    setStatus('Analysis complete.', 'success', analyzeResult.payload);
+  } else {
+    setStatus(analyzeResult.message, 'error');
+  }
 }
