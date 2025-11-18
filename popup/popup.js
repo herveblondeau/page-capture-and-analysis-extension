@@ -23,6 +23,7 @@ const ui = {
   instructionsInput: document.getElementById('instructionsInput'),
   statusLabel: document.getElementById('statusLabel'),
   resultPayload: document.getElementById('resultPayload'),
+  copyButton: document.getElementById('copyResultButton'),
   clearButton: document.getElementById('clearCaptureButton')
 };
 
@@ -36,6 +37,7 @@ function init() {
   ui.analyzeButton.addEventListener('click', handleAnalyze);
   ui.instructionsInput.addEventListener('input', handleInstructionsInput);
   ui.clearButton.addEventListener('click', handleClearCapture);
+  ui.copyButton.addEventListener('click', handleCopyResult);
 
   restoreState();
 }
@@ -232,9 +234,11 @@ function setStatus(message, type = 'neutral', payload = null) {
   if (type === 'success' && payload) {
     ui.resultPayload.textContent = JSON.stringify(payload, null, 2);
     ui.resultPayload.classList.remove('hidden');
+    ui.copyButton.disabled = false;
   } else {
     ui.resultPayload.textContent = '';
     ui.resultPayload.classList.add('hidden');
+    ui.copyButton.disabled = true;
   }
 }
 
@@ -277,5 +281,18 @@ function renderResult() {
     setStatus('Analysis complete.', 'success', analyzeResult.payload);
   } else {
     setStatus(analyzeResult.message, 'error');
+  }
+}
+
+async function handleCopyResult() {
+  if (ui.copyButton.disabled || !ui.resultPayload.textContent) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(ui.resultPayload.textContent);
+    setStatus('Result copied.', 'success', state.capture?.analyzeResult?.payload);
+  } catch (error) {
+    console.error('[popup] Copy failed', error);
+    setStatus('Unable to copy result.', 'error');
   }
 }
