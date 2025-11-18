@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Page Capture & Analyze",
+  "description": "Capture selected text or a screen region, annotate it, and send it for analysis.",
+  "version": "0.1.0",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_title": "Capture & Analyze"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/regionCapture.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

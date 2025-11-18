@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capture & Analyze</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <h1>Capture</h1>
+        <div class="mode-toggle" role="group" aria-label="Capture mode">
+          <button data-mode="text" class="mode-button active">Text</button>
+          <button data-mode="image" class="mode-button">Screenshot</button>
+        </div>
+      </header>
+
+      <div class="controls">
+        <button id="captureButton" class="primary">Capture</button>
+        <button id="analyzeButton" class="secondary" disabled>Analyze</button>
+      </div>
+
+      <section class="details">
+        <div class="details-header">
+          <span id="captureTypeLabel">No capture yet</span>
+          <span id="timestampLabel"></span>
+        </div>
+        <div id="detailsContent" class="details-content empty">
+          Select text on the page or capture a screenshot region to get started.
+        </div>
+        <div id="imageMeta" class="image-meta hidden"></div>
+      </section>
+
+      <label class="instructions">
+        <span>Custom instructions (optional)</span>
+        <textarea id="instructionsInput" rows="3" placeholder="Add context for the analysis..."></textarea>
+      </label>
+
+      <section class="status">
+        <span id="statusLabel">Idle</span>
+      </section>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
