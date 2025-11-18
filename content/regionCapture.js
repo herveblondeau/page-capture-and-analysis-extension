@@ -1,8 +1,9 @@
+console.log('[content] regionCapture.js loaded 1');
 (function () {
-  if (window.__pqRegionCaptureInitialized) {
-    return;
+  console.log('[content] regionCapture.js loaded 2');
+  if (window.__pqRegionCaptureListener) {
+    chrome.runtime.onMessage.removeListener(window.__pqRegionCaptureListener);
   }
-  window.__pqRegionCaptureInitialized = true;
 
   let overlay = null;
   let selectionBox = null;
@@ -11,7 +12,7 @@
   let activeResolve = null;
   let activeReject = null;
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const listener = (message, sender, sendResponse) => {
     if (message?.type !== 'START_REGION_CAPTURE') {
       return;
     }
@@ -20,9 +21,13 @@
       .then((region) => sendResponse({ ok: true, region }))
       .catch((error) => sendResponse({ ok: false, error: error.message }));
     return true;
-  });
+  };
+
+  chrome.runtime.onMessage.addListener(listener);
+  window.__pqRegionCaptureListener = listener;
 
   function startRegionSelection() {
+    console.log('[content] Starting region selection');
     if (overlay) {
       return Promise.reject(new Error('Capture already in progress'));
     }
@@ -69,9 +74,12 @@
     instruction.addEventListener('click', cancelSelection);
     overlay.appendChild(instruction);
 
+    console.log('[content] Adding event listeners');
     overlay.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp, { once: true });
+    document.addEventListener('keydown', handleKeyDown, { once: false });
 
+    console.log('[content] Adding overlay to body');
     document.body.appendChild(overlay);
   }
 
@@ -90,6 +98,7 @@
   }
 
   function handleMouseUp(event) {
+    console.log('[content] Mouse up event');
     overlay?.removeEventListener('mousemove', handleMouseMove);
 
     if (!selectionBox) {
@@ -145,8 +154,17 @@
     rejectFn?.(new Error('Selection cancelled'));
   }
 
+  function handleKeyDown(event) {
+    console.log('[content] Key down event', event.key);
+    if (event.key === 'Escape') {
+      cancelSelection();
+    }
+  }
+
   function cleanup() {
+    console.log('[content] Cleaning up');
     overlay?.removeEventListener('mousedown', handleMouseDown);
+    document.removeEventListener('keydown', handleKeyDown);
     overlay?.remove();
     overlay = null;
     selectionBox = null;

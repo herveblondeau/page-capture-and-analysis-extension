@@ -163,7 +163,7 @@ async function handleStartCapture(message) {
 
   let capturePayload;
   if (mode === 'image') {
-    await chrome.tabs.update(targetTabId, { active: true });
+    await focusTabAndWindow(tab);
     const region = await requestRegionCapture(targetTabId);
     if (!region?.ok) {
       console.warn('[background] Region capture failed response', region);
@@ -172,7 +172,7 @@ async function handleStartCapture(message) {
     console.log('[background] Region capture resolved', region.region);
     capturePayload = await handleRegionImageCapture(tab, region.region);
   } else {
-    await chrome.tabs.update(targetTabId, { active: true });
+    await focusTabAndWindow(tab);
     capturePayload = await captureSelectedText(targetTabId);
   }
 
@@ -266,6 +266,12 @@ async function handleRegionImageCapture(tab, region) {
     pixelWidth: cropped.pixelWidth,
     pixelHeight: cropped.pixelHeight
   };
+}
+
+async function focusTabAndWindow(tab) {
+  if (!tab) return;
+  await chrome.windows.update(tab.windowId, { focused: true });
+  await chrome.tabs.update(tab.id, { active: true });
 }
 
 async function cropDataUrlToRegion(dataUrl, region) {
