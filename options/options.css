@@ -80,6 +80,32 @@ input[type='url'] {
   }
 }
 
+.hint {
+  font-size: 12px;
+  color: rgba(18, 20, 28, 0.6);
+  margin-top: -2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hint {
+    color: rgba(245, 246, 251, 0.6);
+  }
+}
+
+.hint code {
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(18, 20, 28, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .hint code {
+    background: rgba(245, 246, 251, 0.1);
+  }
+}
+
 .actions {
   display: flex;
   align-items: center;

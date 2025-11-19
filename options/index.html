@@ -10,19 +10,20 @@
     <main class="settings">
       <header>
         <h1>Extension Settings</h1>
-        <p>Configure the analysis endpoint required for captures.</p>
+        <p>Configure the analysis endpoint base URL required for captures.</p>
       </header>
 
       <form id="settingsForm">
         <label>
-          <span>Analysis endpoint URL</span>
+          <span>Analysis endpoint base URL</span>
           <input
             id="endpointInput"
             type="url"
             name="endpoint"
-            placeholder="https://api.example.com/analysis"
+            placeholder="https://api.example.com"
             required
           />
+          <small class="hint">Text and image requests will be sent to <code>/text</code> and <code>/image</code> endpoints respectively.</small>
         </label>
 
         <div class="actions">

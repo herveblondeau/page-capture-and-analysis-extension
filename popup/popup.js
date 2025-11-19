@@ -183,28 +183,45 @@ async function handleAnalyze() {
   setStatus('Analyzing…');
 
   try {
-    const body = {
-      type: state.capture.type,
-      instructions: (state.instructions || '').trim(),
-      language: state.language === 'auto' ? null : state.language,
-      source: state.capture.source,
-      content:
-        state.capture.type === 'text'
-          ? { text: state.capture.text }
-          : {
-              imageDataUrl: state.capture.imageDataUrl,
-              cssWidth: state.capture.cssWidth,
-              cssHeight: state.capture.cssHeight,
-              pixelWidth: state.capture.pixelWidth,
-              pixelHeight: state.capture.pixelHeight
-            }
-    };
+    let response;
 
-    const response = await fetch(state.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    if (state.capture.type === 'text') {
+      // Text analysis: send as JSON to /text endpoint
+      const body = {
+        instructions: (state.instructions || '').trim(),
+        language: state.language === 'auto' ? null : state.language,
+        source: state.capture.source,
+        text: state.capture.text
+      };
+
+      response = await fetch(buildEndpoint('/text'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      // Image analysis: send as multipart/form-data to /image endpoint
+      const imageBlob = await dataUrlToBlob(state.capture.imageDataUrl);
+
+      const metadata = {
+        instructions: (state.instructions || '').trim(),
+        language: state.language === 'auto' ? null : state.language,
+        source: state.capture.source,
+        cssWidth: state.capture.cssWidth,
+        cssHeight: state.capture.cssHeight,
+        pixelWidth: state.capture.pixelWidth,
+        pixelHeight: state.capture.pixelHeight
+      };
+
+      const formData = new FormData();
+      formData.append('metadata', JSON.stringify(metadata));
+      formData.append('image', imageBlob, 'capture.png');
+
+      response = await fetch(buildEndpoint('/image'), {
+        method: 'POST',
+        body: formData
+      });
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -355,6 +372,16 @@ function formatTimestamp(timestamp) {
   } catch {
     return '';
   }
+}
+
+async function dataUrlToBlob(dataUrl) {
+  const response = await fetch(dataUrl);
+  return await response.blob();
+}
+
+function buildEndpoint(path) {
+  const base = state.endpoint.replace(/\/+$/, '');
+  return new URL(path, base).toString();
 }
 
 async function getActiveTab() {
