@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Capture & Analyze",
+  "name": "Page Capture & Analysis",
   "description": "Capture selected text or a screen region, annotate it, and send it for analysis.",
   "version": "0.1.0",
   "permissions": [
@@ -18,7 +18,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Capture & Analyze"
+    "default_title": "Page Capture & Analysis"
   },
   "options_page": "options/index.html",
   "content_scripts": [
