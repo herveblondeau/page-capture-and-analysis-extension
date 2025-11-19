@@ -165,24 +165,85 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.details {
+.accordion-section {
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 12px;
   background: var(--surface);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
 }
 
-.details-header {
+.accordion-section[data-section="selection"] {
+  flex: 1;
+  min-height: 0;
+}
+
+.accordion-section[data-section="selection"].collapsed {
+  flex: none;
+}
+
+.accordion-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  text-align: left;
+  width: 100%;
+  transition: background 0.2s ease;
+}
+
+.accordion-header:hover {
+  background: var(--accent-soft);
+}
+
+.accordion-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.accordion-icon {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.accordion-section.collapsed .accordion-icon {
+  transform: rotate(-90deg);
+}
+
+.accordion-subtitle {
   font-size: 12px;
+  font-weight: 400;
   color: var(--muted);
+  margin-left: 8px;
+}
+
+.accordion-content {
+  max-height: 1000px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 12px 12px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.accordion-section[data-section="selection"] .accordion-content {
+  flex: 1;
+  min-height: 0;
+}
+
+.accordion-section.collapsed .accordion-content {
+  max-height: 0;
+  padding: 0 12px;
 }
 
 .details-content {
@@ -195,6 +256,7 @@ button:disabled {
   font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   font-size: 12px;
   background: rgba(0, 0, 0, 0.02);
+  margin-top: 8px;
 }
 
 .details-content.empty {
@@ -224,24 +286,10 @@ button:disabled {
   display: none;
 }
 
-.instructions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--muted);
-  flex-shrink: 0;
-}
-
-.instructions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.instructions textarea {
+.accordion-content textarea {
   resize: vertical;
   min-height: 70px;
+  width: 100%;
   border-radius: 10px;
   border: 1px solid var(--border);
   padding: 8px;
@@ -249,22 +297,20 @@ button:disabled {
   font-family: inherit;
   color: var(--fg);
   background: var(--surface);
+  margin-top: 8px;
 }
 
-.result {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.accordion-section[data-section="result"] .accordion-content {
+  gap: 8px;
   font-size: 13px;
   color: var(--muted);
-  flex-shrink: 0;
 }
 
-.result.success #statusLabel {
+.accordion-section[data-section="result"].success #statusLabel {
   color: var(--success);
 }
 
-.result.error #statusLabel {
+.accordion-section[data-section="result"].error #statusLabel {
   color: var(--error);
 }
 

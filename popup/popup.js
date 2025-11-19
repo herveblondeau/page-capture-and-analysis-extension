@@ -13,7 +13,12 @@ const state = {
   analyzing: false,
   instructions: '',
   capturing: false,
-  endpoint: ''
+  endpoint: '',
+  accordion: {
+    selection: true,
+    instructions: true,
+    result: false
+  }
 };
 
 const ui = {
@@ -30,7 +35,12 @@ const ui = {
   copyButton: document.getElementById('copyResultButton'),
   clearCaptureButton: document.getElementById('clearCaptureButton'),
   clearInstructionsButton: document.getElementById('clearInstructionsButton'),
-  settingsButton: document.getElementById('openSettingsButton')
+  settingsButton: document.getElementById('openSettingsButton'),
+  accordionSections: {
+    selection: document.querySelector('[data-section="selection"]'),
+    instructions: document.querySelector('[data-section="instructions"]'),
+    result: document.querySelector('[data-section="result"]')
+  }
 };
 
 init();
@@ -47,8 +57,16 @@ async function init() {
   ui.copyButton.addEventListener('click', handleCopyResult);
   ui.settingsButton.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
+  Object.entries(ui.accordionSections).forEach(([key, section]) => {
+    const header = section.querySelector('.accordion-header');
+    if (header) {
+      header.addEventListener('click', () => toggleAccordion(key));
+    }
+  });
+
   await hydrateSettings();
   await restoreState();
+  syncAccordionState();
   chrome.storage.onChanged.addListener(handleStorageChange);
 }
 
@@ -72,6 +90,21 @@ function setMode(mode) {
   });
 }
 
+function toggleAccordion(section) {
+  state.accordion[section] = !state.accordion[section];
+  syncAccordionState();
+}
+
+function syncAccordionState() {
+  Object.entries(ui.accordionSections).forEach(([key, section]) => {
+    if (state.accordion[key]) {
+      section.classList.remove('collapsed');
+    } else {
+      section.classList.add('collapsed');
+    }
+  });
+}
+
 async function handleCapture() {
   if (!ensureEndpointConfigured()) {
     return;
@@ -88,15 +121,16 @@ async function handleCapture() {
     });
 
     if (!response?.ok) {
-      console.warn('[popup] Capture failed response', response);
       throw new Error(response?.error || 'Capture failed.');
     }
 
     state.capture = response.capture;
+    state.accordion.selection = true;
+    state.accordion.result = false;
+    syncAccordionState();
     renderCaptureDetails();
     setStatus('Capture saved.', 'success');
   } catch (error) {
-    console.error('[popup] Capture error', error);
     setStatus(error.message || 'Capture failed.', 'error');
   } finally {
     state.capturing = false;
@@ -160,6 +194,9 @@ async function handleAnalyze() {
     };
     await saveLastCapture(withUpdatedTimestamp(state.capture));
 
+    state.accordion.selection = false;
+    state.accordion.result = true;
+    syncAccordionState();
     renderCaptureDetails();
     setStatus(
       success ? 'Analysis complete.' : message,
@@ -167,7 +204,6 @@ async function handleAnalyze() {
       payload
     );
   } catch (error) {
-    console.error('[popup] Analyze error', error);
     setStatus(error.message || 'Analyze failed.', 'error');
   } finally {
     state.analyzing = false;
@@ -199,7 +235,7 @@ function persistInstructions() {
 
 function renderCaptureDetails() {
   if (!state.capture?.type) {
-    ui.captureTypeLabel.textContent = 'No capture yet';
+    ui.captureTypeLabel.textContent = 'Selection';
     ui.timestampLabel.textContent = '';
     ui.detailsContent.textContent =
       'Select text on the page or capture a screenshot region to get started.';
@@ -252,12 +288,12 @@ function syncCaptureButton() {
 
 function setStatus(message, type = 'neutral', payload = null) {
   ui.statusLabel.textContent = message;
-  const container = ui.statusLabel.parentElement;
-  container.classList.remove('success', 'error');
+  const resultSection = ui.accordionSections.result;
+  resultSection.classList.remove('success', 'error');
   if (type === 'success') {
-    container.classList.add('success');
+    resultSection.classList.add('success');
   } else if (type === 'error') {
-    container.classList.add('error');
+    resultSection.classList.add('error');
   }
 
   if (type === 'success' && payload) {
@@ -282,7 +318,6 @@ function formatTimestamp(timestamp) {
 }
 
 async function getActiveTab() {
-  console.warn('[popup] getActiveTab should not be called in window mode');
   return null;
 }
 
@@ -341,7 +376,6 @@ async function handleCopyResult() {
     await navigator.clipboard.writeText(ui.resultPayload.textContent);
     setStatus('Result copied.', 'success', state.capture?.analyzeResult?.payload);
   } catch (error) {
-    console.error('[popup] Copy failed', error);
     setStatus('Unable to copy result.', 'error');
   }
 }

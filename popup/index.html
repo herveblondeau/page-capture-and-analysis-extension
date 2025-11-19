@@ -26,30 +26,48 @@
         <button id="analyzeButton" class="secondary" disabled>Analyze</button>
       </div>
 
-      <section class="details">
-        <div class="details-header">
-          <span id="captureTypeLabel">No capture yet</span>
-          <span id="timestampLabel"></span>
+      <section class="accordion-section" data-section="selection">
+        <button class="accordion-header" type="button">
+          <span class="accordion-title">
+            <span class="accordion-icon">▼</span>
+            <span id="captureTypeLabel">Selection</span>
+            <span id="timestampLabel" class="accordion-subtitle"></span>
+          </span>
+          <button id="clearCaptureButton" class="tertiary small" disabled onclick="event.stopPropagation()">Clear</button>
+        </button>
+        <div class="accordion-content">
+          <div id="detailsContent" class="details-content empty">
+            Select text on the page or capture a screenshot region to get started.
+          </div>
+          <div id="imageMeta" class="image-meta hidden"></div>
         </div>
-        <div id="detailsContent" class="details-content empty">
-          Select text on the page or capture a screenshot region to get started.
-        </div>
-        <div id="imageMeta" class="image-meta hidden"></div>
-        <button id="clearCaptureButton" class="tertiary" disabled>Clear capture</button>
       </section>
 
-      <label class="instructions">
-        <div class="instructions-header">
-          <span>Custom instructions (optional)</span>
-          <button id="clearInstructionsButton" class="tertiary small" disabled>Clear</button>
+      <section class="accordion-section" data-section="instructions">
+        <button class="accordion-header" type="button">
+          <span class="accordion-title">
+            <span class="accordion-icon">▼</span>
+            <span>Custom instructions</span>
+          </span>
+          <button id="clearInstructionsButton" class="tertiary small" disabled onclick="event.stopPropagation()">Clear</button>
+        </button>
+        <div class="accordion-content">
+          <textarea id="instructionsInput" rows="3" placeholder="Add context for the analysis..."></textarea>
         </div>
-        <textarea id="instructionsInput" rows="3" placeholder="Add context for the analysis..."></textarea>
-      </label>
+      </section>
 
-      <section class="result">
-        <span id="statusLabel">Idle</span>
-        <div id="resultPayload" class="result-payload hidden"></div>
-        <button id="copyResultButton" class="tertiary" disabled>Copy result</button>
+      <section class="accordion-section" data-section="result">
+        <button class="accordion-header" type="button">
+          <span class="accordion-title">
+            <span class="accordion-icon">▼</span>
+            <span>Analysis result</span>
+          </span>
+        </button>
+        <div class="accordion-content">
+          <span id="statusLabel">Idle</span>
+          <div id="resultPayload" class="result-payload hidden"></div>
+          <button id="copyResultButton" class="tertiary" disabled>Copy result</button>
+        </div>
       </section>
     </main>
 
