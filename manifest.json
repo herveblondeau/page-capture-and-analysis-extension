@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Page Capture & Analyze",
+  "name": "Capture & Analyze",
   "description": "Capture selected text or a screen region, annotate it, and send it for analysis.",
   "version": "0.1.0",
   "permissions": [
