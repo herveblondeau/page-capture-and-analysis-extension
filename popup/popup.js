@@ -28,7 +28,8 @@ const ui = {
   statusLabel: document.getElementById('statusLabel'),
   resultPayload: document.getElementById('resultPayload'),
   copyButton: document.getElementById('copyResultButton'),
-  clearButton: document.getElementById('clearCaptureButton'),
+  clearCaptureButton: document.getElementById('clearCaptureButton'),
+  clearInstructionsButton: document.getElementById('clearInstructionsButton'),
   settingsButton: document.getElementById('openSettingsButton')
 };
 
@@ -41,7 +42,8 @@ async function init() {
   ui.captureButton.addEventListener('click', handleCapture);
   ui.analyzeButton.addEventListener('click', handleAnalyze);
   ui.instructionsInput.addEventListener('input', handleInstructionsInput);
-  ui.clearButton.addEventListener('click', handleClearCapture);
+  ui.clearCaptureButton.addEventListener('click', handleClearCapture);
+  ui.clearInstructionsButton.addEventListener('click', handleClearInstructions);
   ui.copyButton.addEventListener('click', handleCopyResult);
   ui.settingsButton.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
@@ -60,6 +62,7 @@ async function restoreState() {
   }
   syncAnalyzeButton();
   syncCaptureButton();
+  syncClearButtons();
 }
 
 function setMode(mode) {
@@ -174,6 +177,7 @@ async function handleAnalyze() {
 
 function handleInstructionsInput(event) {
   state.instructions = event.target.value;
+  syncClearButtons();
   persistInstructions();
 }
 
@@ -201,7 +205,7 @@ function renderCaptureDetails() {
       'Select text on the page or capture a screenshot region to get started.';
     ui.detailsContent.classList.add('empty');
     ui.imageMeta.classList.add('hidden');
-    ui.clearButton.disabled = true;
+    syncClearButtons();
     renderResult();
     return;
   }
@@ -229,7 +233,12 @@ function renderCaptureDetails() {
 
   renderResult();
 
-  ui.clearButton.disabled = false;
+  syncClearButtons();
+}
+
+function syncClearButtons() {
+  ui.clearCaptureButton.disabled = !state.capture?.type;
+  ui.clearInstructionsButton.disabled = !state.instructions.trim();
 }
 
 function syncAnalyzeButton() {
@@ -282,12 +291,28 @@ async function handleClearCapture() {
     return;
   }
   state.capture = null;
-  state.instructions = '';
-  ui.instructionsInput.value = '';
   await clearLastCapture();
   renderCaptureDetails();
   syncAnalyzeButton();
+  syncClearButtons();
   setStatus('Capture cleared.');
+}
+
+async function handleClearInstructions() {
+  if (!state.instructions.trim()) {
+    return;
+  }
+  state.instructions = '';
+  ui.instructionsInput.value = '';
+  if (state.capture) {
+    state.capture = {
+      ...state.capture,
+      instructions: ''
+    };
+    await saveLastCapture(withUpdatedTimestamp(state.capture));
+  }
+  syncClearButtons();
+  setStatus('Instructions cleared.');
 }
 
 function renderResult() {

@@ -148,6 +148,12 @@ button.secondary {
   cursor: not-allowed;
 }
 
+.tertiary.small {
+  margin-top: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -215,6 +221,12 @@ button:disabled {
   gap: 4px;
   font-size: 13px;
   color: var(--muted);
+}
+
+.instructions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .instructions textarea {
