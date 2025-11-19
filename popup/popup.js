@@ -252,6 +252,9 @@ async function handleAnalyze() {
       payload
     );
   } catch (error) {
+    state.accordion.selection = false;
+    state.accordion.result = true;
+    syncAccordionState();
     setStatus(error.message || 'Analyze failed.', 'error');
   } finally {
     state.analyzing = false;
