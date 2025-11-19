@@ -33,7 +33,15 @@
             <span id="captureTypeLabel">Selection</span>
             <span id="timestampLabel" class="accordion-subtitle"></span>
           </span>
-          <button id="clearCaptureButton" class="tertiary small" disabled onclick="event.stopPropagation()">Clear</button>
+          <div class="accordion-header-actions">
+            <select id="languageSelect" class="language-select">
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+              <option value="ja">日本語</option>
+              <option value="auto">Auto detect</option>
+            </select>
+            <button id="clearCaptureButton" class="tertiary small" disabled>Clear</button>
+          </div>
         </button>
         <div class="accordion-content">
           <div id="detailsContent" class="details-content empty">

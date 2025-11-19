@@ -210,6 +210,33 @@ button:disabled {
   flex: 1;
 }
 
+.accordion-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.language-select:hover {
+  border-color: var(--accent);
+}
+
+.language-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .accordion-icon {
   font-size: 10px;
   transition: transform 0.2s ease;

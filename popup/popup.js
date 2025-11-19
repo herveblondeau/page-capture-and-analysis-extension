@@ -4,6 +4,7 @@ import {
   clearLastCapture,
   withUpdatedTimestamp,
   loadSettings,
+  saveSettings,
   SETTINGS_STORAGE_KEY
 } from '../shared/storage.js';
 
@@ -14,6 +15,7 @@ const state = {
   instructions: '',
   capturing: false,
   endpoint: '',
+  language: 'auto',
   accordion: {
     selection: true,
     instructions: true,
@@ -36,6 +38,7 @@ const ui = {
   clearCaptureButton: document.getElementById('clearCaptureButton'),
   clearInstructionsButton: document.getElementById('clearInstructionsButton'),
   settingsButton: document.getElementById('openSettingsButton'),
+  languageSelect: document.getElementById('languageSelect'),
   accordionSections: {
     selection: document.querySelector('[data-section="selection"]'),
     instructions: document.querySelector('[data-section="instructions"]'),
@@ -52,10 +55,30 @@ async function init() {
   ui.captureButton.addEventListener('click', handleCapture);
   ui.analyzeButton.addEventListener('click', handleAnalyze);
   ui.instructionsInput.addEventListener('input', handleInstructionsInput);
-  ui.clearCaptureButton.addEventListener('click', handleClearCapture);
+  ui.clearCaptureButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleClearCapture();
+  });
   ui.clearInstructionsButton.addEventListener('click', handleClearInstructions);
   ui.copyButton.addEventListener('click', handleCopyResult);
   ui.settingsButton.addEventListener('click', () => chrome.runtime.openOptionsPage());
+  ui.languageSelect.addEventListener('change', handleLanguageChange);
+
+  // Prevent accordion toggle when interacting with language select
+  ['mousedown', 'click', 'change'].forEach(eventType => {
+    ui.languageSelect.addEventListener(eventType, (e) => {
+      e.stopPropagation();
+    });
+  });
+
+  const headerActions = document.querySelector('.accordion-header-actions');
+  if (headerActions) {
+    ['mousedown', 'click'].forEach(eventType => {
+      headerActions.addEventListener(eventType, (e) => {
+        e.stopPropagation();
+      });
+    });
+  }
 
   Object.entries(ui.accordionSections).forEach(([key, section]) => {
     const header = section.querySelector('.accordion-header');
@@ -78,6 +101,13 @@ async function restoreState() {
     ui.instructionsInput.value = state.instructions;
     renderCaptureDetails();
   }
+
+  const settings = await loadSettings();
+  if (settings?.language) {
+    state.language = settings.language;
+    ui.languageSelect.value = settings.language;
+  }
+
   syncAnalyzeButton();
   syncCaptureButton();
   syncClearButtons();
@@ -156,6 +186,7 @@ async function handleAnalyze() {
     const body = {
       type: state.capture.type,
       instructions: (state.instructions || '').trim(),
+      language: state.language === 'auto' ? null : state.language,
       source: state.capture.source,
       content:
         state.capture.type === 'text'
@@ -215,6 +246,15 @@ function handleInstructionsInput(event) {
   state.instructions = event.target.value;
   syncClearButtons();
   persistInstructions();
+}
+
+async function handleLanguageChange(event) {
+  state.language = event.target.value;
+  const settings = await loadSettings();
+  await saveSettings({
+    ...(settings || {}),
+    language: state.language
+  });
 }
 
 let instructionsSaveHandle;
