@@ -190,7 +190,7 @@ async function handleAnalyze() {
       const body = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
-        source: state.capture.source,
+        // source: state.capture.source,
         text: state.capture.text
       };
 
@@ -206,7 +206,7 @@ async function handleAnalyze() {
       const metadata = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
-        source: state.capture.source,
+        // source: state.capture.source,
         cssWidth: state.capture.cssWidth,
         cssHeight: state.capture.cssHeight,
         pixelWidth: state.capture.pixelWidth,
@@ -229,14 +229,14 @@ async function handleAnalyze() {
 
     const payload = await response.json();
     const success = payload?.success === true;
-    const message =
-      payload?.message || (success ? 'Analysis complete.' : 'Analysis failed.');
+    const result =
+      payload?.result || (success ? 'Analysis complete.' : 'Analysis failed.');
 
     state.capture = {
       ...state.capture,
       analyzeResult: {
         success,
-        message,
+        result,
         payload
       }
     };
@@ -357,7 +357,15 @@ function setStatus(message, type = 'neutral', payload = null) {
   }
 
   if (type === 'success' && payload) {
-    ui.resultPayload.textContent = JSON.stringify(payload, null, 2);
+    const result = payload.result;
+    if (result !== undefined) {
+      // Display only the result node, stringify if it's an object
+      ui.resultPayload.textContent = typeof result === 'string'
+        ? result
+        : JSON.stringify(result, null, 2);
+    } else {
+      ui.resultPayload.textContent = '';
+    }
     ui.resultPayload.classList.remove('hidden');
     ui.copyButton.disabled = false;
   } else {
@@ -384,7 +392,7 @@ async function dataUrlToBlob(dataUrl) {
 
 function buildEndpoint(path) {
   const base = state.endpoint.replace(/\/+$/, '');
-  return new URL(path, base).toString();
+  return new URL(base + path);
 }
 
 async function getActiveTab() {
