@@ -175,8 +175,7 @@ button:disabled {
 }
 
 .accordion-section[data-section="selection"] {
-  flex: 1;
-  min-height: 0;
+  flex: 0 1 auto;
 }
 
 .accordion-section[data-section="selection"].collapsed {
@@ -264,8 +263,7 @@ button:disabled {
 }
 
 .accordion-section[data-section="selection"] .accordion-content {
-  flex: 1;
-  min-height: 0;
+  flex: 0 1 auto;
 }
 
 .accordion-section.collapsed .accordion-content {
@@ -327,7 +325,18 @@ button:disabled {
   margin-top: 8px;
 }
 
+.accordion-section[data-section="result"] {
+  flex: 1;
+  min-height: 0;
+}
+
+.accordion-section[data-section="result"].collapsed {
+  flex: none;
+}
+
 .accordion-section[data-section="result"] .accordion-content {
+  flex: 1;
+  min-height: 0;
   gap: 8px;
   font-size: 13px;
   color: var(--muted);
@@ -348,7 +357,8 @@ button:disabled {
   border: 1px solid var(--border);
   padding: 8px;
   background: var(--surface);
-  max-height: min(160px, 30vh);
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   color: var(--fg);
   white-space: pre-wrap; /* For non-markdown content */
