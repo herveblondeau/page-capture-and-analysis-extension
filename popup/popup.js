@@ -182,6 +182,11 @@ async function handleAnalyze() {
   syncAnalyzeButton();
   setStatus('Analyzing…');
 
+  // Expand result section and collapse selection section immediately
+  state.accordion.selection = false;
+  state.accordion.result = true;
+  syncAccordionState();
+
   try {
     let response;
 
@@ -242,9 +247,6 @@ async function handleAnalyze() {
     };
     await saveLastCapture(withUpdatedTimestamp(state.capture));
 
-    state.accordion.selection = false;
-    state.accordion.result = true;
-    syncAccordionState();
     renderCaptureDetails();
     setStatus(
       success ? 'Analysis complete.' : message,
@@ -252,9 +254,6 @@ async function handleAnalyze() {
       payload
     );
   } catch (error) {
-    state.accordion.selection = false;
-    state.accordion.result = true;
-    syncAccordionState();
     setStatus(error.message || 'Analyze failed.', 'error');
   } finally {
     state.analyzing = false;
