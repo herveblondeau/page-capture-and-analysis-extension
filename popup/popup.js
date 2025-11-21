@@ -16,6 +16,7 @@ const state = {
   capturing: false,
   endpoint: '',
   language: 'auto',
+  abortController: null,
   accordion: {
     selection: true,
     instructions: true,
@@ -53,7 +54,13 @@ async function init() {
     button.addEventListener('click', () => setMode(button.dataset.mode))
   );
   ui.captureButton.addEventListener('click', handleCapture);
-  ui.analyzeButton.addEventListener('click', handleAnalyze);
+  ui.analyzeButton.addEventListener('click', () => {
+    if (state.analyzing) {
+      handleCancelAnalyze();
+    } else {
+      handleAnalyze();
+    }
+  });
   ui.instructionsInput.addEventListener('input', handleInstructionsInput);
   ui.clearCaptureButton.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -179,6 +186,7 @@ async function handleAnalyze() {
   }
 
   state.analyzing = true;
+  state.abortController = new AbortController();
   syncAnalyzeButton();
   syncCaptureButton();
   setStatus('Analyzing…');
@@ -203,7 +211,8 @@ async function handleAnalyze() {
       response = await fetch(buildEndpoint('/text'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: state.abortController.signal
       });
     } else {
       // Image analysis: send as multipart/form-data to /image endpoint
@@ -225,7 +234,8 @@ async function handleAnalyze() {
 
       response = await fetch(buildEndpoint('/image'), {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: state.abortController.signal
       });
     }
 
@@ -255,12 +265,25 @@ async function handleAnalyze() {
       payload
     );
   } catch (error) {
-    setStatus(error.message || 'Analyze failed.', 'error');
+    // Don't show error if it was a user cancellation
+    if (error.name === 'AbortError') {
+      setStatus('Analysis cancelled.', 'warning');
+    } else {
+      setStatus(error.message || 'Analyze failed.', 'error');
+    }
   } finally {
     state.analyzing = false;
+    state.abortController = null;
     syncAnalyzeButton();
     syncCaptureButton();
   }
+}
+
+function handleCancelAnalyze() {
+  if (state.abortController) {
+    state.abortController.abort();
+  }
+  // State will be reset in the finally block of handleAnalyze
 }
 
 function handleInstructionsInput(event) {
@@ -339,8 +362,16 @@ function syncClearButtons() {
 }
 
 function syncAnalyzeButton() {
-  ui.analyzeButton.disabled =
-    !state.capture?.type || state.analyzing || !hasEndpointConfigured();
+  if (state.analyzing) {
+    ui.analyzeButton.textContent = 'Cancel';
+    ui.analyzeButton.disabled = false;
+    ui.analyzeButton.classList.add('cancel');
+  } else {
+    ui.analyzeButton.textContent = 'Analyze';
+    ui.analyzeButton.disabled =
+      !state.capture?.type || !hasEndpointConfigured();
+    ui.analyzeButton.classList.remove('cancel');
+  }
 }
 
 function syncCaptureButton() {
@@ -350,11 +381,13 @@ function syncCaptureButton() {
 function setStatus(message, type = 'neutral', payload = null) {
   ui.statusLabel.textContent = message;
   const resultSection = ui.accordionSections.result;
-  resultSection.classList.remove('success', 'error');
+  resultSection.classList.remove('success', 'error', 'warning');
   if (type === 'success') {
     resultSection.classList.add('success');
   } else if (type === 'error') {
     resultSection.classList.add('error');
+  } else if (type === 'warning') {
+    resultSection.classList.add('warning');
   }
 
   if (type === 'success' && payload) {

@@ -9,6 +9,7 @@
   --accent-soft: rgba(37, 99, 235, 0.1);
   --error: #dc2626;
   --success: #059669;
+  --warning: #f59e0b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +24,7 @@
     --accent-soft: rgba(96, 165, 250, 0.15);
     --error: #f87171;
     --success: #34d399;
+    --warning: #fbbf24;
   }
 }
 
@@ -135,6 +137,12 @@ button.secondary {
   background: var(--surface);
   color: var(--fg);
   border: 1px solid var(--border);
+}
+
+button.secondary.cancel {
+  background: var(--error);
+  color: #ffffff;
+  border: 1px solid var(--error);
 }
 
 .tertiary {
@@ -348,6 +356,10 @@ button:disabled {
 
 .accordion-section[data-section="result"].error #statusLabel {
   color: var(--error);
+}
+
+.accordion-section[data-section="result"].warning #statusLabel {
+  color: var(--warning);
 }
 
 .result-payload {
