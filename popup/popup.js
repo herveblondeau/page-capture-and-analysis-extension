@@ -180,6 +180,7 @@ async function handleAnalyze() {
 
   state.analyzing = true;
   syncAnalyzeButton();
+  syncCaptureButton();
   setStatus('Analyzing…');
 
   // Expand result section and collapse selection section immediately
@@ -258,6 +259,7 @@ async function handleAnalyze() {
   } finally {
     state.analyzing = false;
     syncAnalyzeButton();
+    syncCaptureButton();
   }
 }
 
@@ -342,7 +344,7 @@ function syncAnalyzeButton() {
 }
 
 function syncCaptureButton() {
-  ui.captureButton.disabled = state.capturing || !hasEndpointConfigured();
+  ui.captureButton.disabled = state.capturing || state.analyzing || !hasEndpointConfigured();
 }
 
 function setStatus(message, type = 'neutral', payload = null) {
