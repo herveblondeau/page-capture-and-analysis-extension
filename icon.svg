@@ -1,0 +1,71 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Blue square background (fills entire area) -->
+  <rect x="0" y="0" width="128" height="128" fill="url(#grad1)"/>
+
+  <!-- Camera/capture icon (larger) -->
+  <g transform="translate(64, 64)">
+    <!-- Camera body -->
+    <rect x="-30" y="-20" width="60" height="40" rx="5" fill="white" opacity="0.95"/>
+    <!-- Camera lens -->
+    <circle cx="0" cy="-5" r="15" fill="url(#grad1)"/>
+    <circle cx="0" cy="-5" r="10" fill="white"/>
+    <!-- Viewfinder -->
+    <rect x="-10" y="12" width="20" height="8" rx="2.5" fill="url(#grad1)"/>
+  </g>
+
+  <!-- Stars/sparkles around the camera (analysis indicator) - white stars, larger -->
+  <!-- Top right -->
+  <g transform="translate(95, 35)">
+    <path d="M 0,-10 L 2.5,-2.5 L 10,-2.5 L 4,1.5 L 6.5,9 L 0,4 L -6.5,9 L -4,1.5 L -10,-2.5 L -2.5,-2.5 Z"
+          fill="white" opacity="0.9"/>
+  </g>
+
+  <!-- Bottom left -->
+  <g transform="translate(33, 95)">
+    <path d="M 0,-6.5 L 2,-2 L 6.5,-2 L 2.5,0.6 L 4,5 L 0,2.5 L -4,5 L -2.5,0.6 L -6.5,-2 L -2,-2 Z"
+          fill="white" opacity="0.8"/>
+  </g>
+
+  <!-- Top left -->
+  <g transform="translate(33, 33)">
+    <path d="M 0,-7.5 L 2,-2 L 7.5,-2 L 3,1.5 L 5,7.5 L 0,3 L -5,7.5 L -3,1.5 L -7.5,-2 L -2,-2 Z"
+          fill="white" opacity="0.85"/>
+  </g>
+
+  <!-- Bottom right -->
+  <g transform="translate(95, 95)">
+    <path d="M 0,-6.5 L 1.5,-1.5 L 5.5,-1.5 L 2.2,0.5 L 3,5 L 0,2.2 L -3,5 L -2.2,0.5 L -5.5,-1.5 L -1.5,-1.5 Z"
+          fill="white" opacity="0.75"/>
+  </g>
+
+  <!-- Right side -->
+  <g transform="translate(105, 64)">
+    <path d="M 0,-5 L 1.2,-1.2 L 5,-1.2 L 2,0.6 L 3,4.5 L 0,2 L -3,4.5 L -2,0.6 L -5,-1.2 L -1.2,-1.2 Z"
+          fill="white" opacity="0.7"/>
+  </g>
+
+  <!-- Left side -->
+  <g transform="translate(23, 64)">
+    <path d="M 0,-5 L 1.2,-1.2 L 5,-1.2 L 2,0.6 L 3,4.5 L 0,2 L -3,4.5 L -2,0.6 L -5,-1.2 L -1.2,-1.2 Z"
+          fill="white" opacity="0.7"/>
+  </g>
+
+  <!-- Top center -->
+  <g transform="translate(64, 23)">
+    <path d="M 0,-5 L 1.2,-1.2 L 5,-1.2 L 2,0.6 L 3,4.5 L 0,2 L -3,4.5 L -2,0.6 L -5,-1.2 L -1.2,-1.2 Z"
+          fill="white" opacity="0.7"/>
+  </g>
+
+  <!-- Bottom center -->
+  <g transform="translate(64, 105)">
+    <path d="M 0,-5 L 1.2,-1.2 L 5,-1.2 L 2,0.6 L 3,4.5 L 0,2 L -3,4.5 L -2,0.6 L -5,-1.2 L -1.2,-1.2 Z"
+          fill="white" opacity="0.7"/>
+  </g>
+</svg>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Icon Generator</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .icon-preview {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .icon-item {
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Extension Icon Generator</h1>
+  <p>Click the buttons below to download icons at different sizes.</p>
+
+  <div class="icon-preview" id="preview"></div>
+
+  <div>
+    <button onclick="generateIcon(16)">Generate 16x16</button>
+    <button onclick="generateIcon(32)">Generate 32x32</button>
+    <button onclick="generateIcon(48)">Generate 48x48</button>
+    <button onclick="generateIcon(128)">Generate 128x128</button>
+    <button onclick="generateAll()">Generate All</button>
+  </div>
+
+  <script>
+    const svgContent = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#grad1)"/>
+
+  <!-- Camera/capture icon (simplified) -->
+  <g transform="translate(64, 64)">
+    <!-- Camera body -->
+    <rect x="-24" y="-16" width="48" height="32" rx="4" fill="white" opacity="0.95"/>
+    <!-- Camera lens -->
+    <circle cx="0" cy="-4" r="12" fill="url(#grad1)"/>
+    <circle cx="0" cy="-4" r="8" fill="white"/>
+    <!-- Viewfinder -->
+    <rect x="-8" y="8" width="16" height="6" rx="2" fill="url(#grad1)"/>
+  </g>
+
+  <!-- Analysis/processing indicator (sparkle/star) -->
+  <g transform="translate(90, 38)">
+    <path d="M 0,-8 L 2,-2 L 8,-2 L 3,1 L 5,7 L 0,3 L -5,7 L -3,1 L -8,-2 L -2,-2 Z"
+          fill="white" opacity="0.9"/>
+  </g>
+
+  <!-- Small sparkle -->
+  <g transform="translate(38, 90)">
+    <path d="M 0,-5 L 1.5,-1.5 L 5,-1.5 L 2,0.5 L 3,4 L 0,2 L -3,4 L -2,0.5 L -5,-1.5 L -1.5,-1.5 Z"
+          fill="white" opacity="0.8"/>
+  </g>
+</svg>`;
+
+    function generateIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const img = new Image();
+      const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, size, size);
+        canvas.toBlob(function(blob) {
+          const link = document.createElement('a');
+          link.download = `icon-${size}.png`;
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          URL.revokeObjectURL(url);
+        });
+      };
+
+      img.src = url;
+    }
+
+    function generateAll() {
+      [16, 32, 48, 128].forEach((size, index) => {
+        setTimeout(() => generateIcon(size), index * 500);
+      });
+    }
+
+    // Show preview
+    function showPreview() {
+      const preview = document.getElementById('preview');
+      [16, 32, 48, 128].forEach(size => {
+        const div = document.createElement('div');
+        div.className = 'icon-item';
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const img = new Image();
+        const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0, size, size);
+          div.appendChild(canvas);
+          div.appendChild(document.createTextNode(`${size}x${size}`));
+          preview.appendChild(div);
+          URL.revokeObjectURL(url);
+        };
+
+        img.src = url;
+      });
+    }
+
+    showPreview();
+  </script>
+</body>
+</html>
