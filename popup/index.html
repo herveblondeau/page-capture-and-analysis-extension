@@ -60,7 +60,7 @@
           <button id="clearInstructionsButton" class="tertiary small" disabled onclick="event.stopPropagation()">Clear</button>
         </button>
         <div class="accordion-content">
-          <textarea id="instructionsInput" rows="3" placeholder="Add context for the analysis..."></textarea>
+          <textarea id="instructionsInput" rows="3" placeholder="Add context for the analysis... If not provided, a summary of the captured content will be supplied"></textarea>
         </div>
       </section>
 
@@ -79,6 +79,7 @@
       </section>
     </main>
 
+    <script src="marked.min.js"></script>
     <script type="module" src="popup.js"></script>
   </body>
 </html>

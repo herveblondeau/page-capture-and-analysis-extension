@@ -359,17 +359,39 @@ function setStatus(message, type = 'neutral', payload = null) {
   if (type === 'success' && payload) {
     const result = payload.result;
     if (result !== undefined) {
-      // Display only the result node, stringify if it's an object
-      ui.resultPayload.textContent = typeof result === 'string'
-        ? result
-        : JSON.stringify(result, null, 2);
+      if (typeof result === 'string') {
+        // Render as markdown - it handles plain text fine
+        if (typeof marked !== 'undefined') {
+          // Store original text for copying
+          ui.resultPayload.dataset.originalText = result;
+          // Render markdown with line breaks preserved
+          ui.resultPayload.innerHTML = marked.parse(result, {
+            breaks: true, // Convert single line breaks to <br>
+            gfm: true     // GitHub Flavored Markdown
+          });
+        } else {
+          // Fallback: preserve line breaks if marked not available
+          ui.resultPayload.style.whiteSpace = 'pre-wrap';
+          ui.resultPayload.textContent = result;
+          ui.resultPayload.dataset.originalText = result;
+        }
+      } else {
+        // For objects, use JSON with preserved formatting
+        const jsonText = JSON.stringify(result, null, 2);
+        ui.resultPayload.style.whiteSpace = 'pre-wrap';
+        ui.resultPayload.textContent = jsonText;
+        ui.resultPayload.dataset.originalText = jsonText;
+      }
     } else {
       ui.resultPayload.textContent = '';
+      ui.resultPayload.dataset.originalText = '';
     }
     ui.resultPayload.classList.remove('hidden');
     ui.copyButton.disabled = false;
   } else {
     ui.resultPayload.textContent = '';
+    ui.resultPayload.innerHTML = '';
+    ui.resultPayload.dataset.originalText = '';
     ui.resultPayload.classList.add('hidden');
     ui.copyButton.disabled = true;
   }
@@ -447,11 +469,12 @@ function renderResult() {
 }
 
 async function handleCopyResult() {
-  if (ui.copyButton.disabled || !ui.resultPayload.textContent) {
+  if (ui.copyButton.disabled || !ui.resultPayload.dataset.originalText) {
     return;
   }
   try {
-    await navigator.clipboard.writeText(ui.resultPayload.textContent);
+    // Copy the original text (not the rendered HTML)
+    await navigator.clipboard.writeText(ui.resultPayload.dataset.originalText);
     setStatus('Result copied.', 'success', state.capture?.analyzeResult?.payload);
   } catch (error) {
     setStatus('Unable to copy result.', 'error');
