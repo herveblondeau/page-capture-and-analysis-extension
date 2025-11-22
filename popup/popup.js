@@ -181,6 +181,10 @@ async function handleCaptureForAnalyze() {
     // Clear capture on failure to prevent using stale data
     state.capture = null;
     renderCaptureDetails();
+    // Expand result section to show error message
+    state.accordion.result = true;
+    state.accordion.selection = false;
+    syncAccordionState();
     setStatus(error.message || 'Capture failed.', 'error');
   } finally {
     state.capturing = false;
