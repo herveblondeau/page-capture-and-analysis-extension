@@ -204,11 +204,24 @@ async function handleAnalyze() {
       const body = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
-        // source: state.capture.source,
         text: state.capture.text
       };
 
       response = await fetch(buildEndpoint('/text'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: state.abortController.signal
+      });
+    } else if (state.capture.type === 'url') {
+      // URL analysis: send as JSON to /text endpoint (treating URL as text)
+      const body = {
+        instructions: (state.instructions || '').trim(),
+        language: state.language === 'auto' ? null : state.language,
+        text: state.capture.url
+      };
+
+      response = await fetch(buildEndpoint('/url'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -221,7 +234,6 @@ async function handleAnalyze() {
       const metadata = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
-        // source: state.capture.source,
         cssWidth: state.capture.cssWidth,
         cssHeight: state.capture.cssHeight,
         pixelWidth: state.capture.pixelWidth,
@@ -322,7 +334,7 @@ function renderCaptureDetails() {
     ui.captureTypeLabel.textContent = 'Selection';
     ui.timestampLabel.textContent = '';
     ui.detailsContent.textContent =
-      'Select text on the page or capture a screenshot region to get started.';
+      'Select text on the page, capture a screenshot region, or capture the page URL to get started.';
     ui.detailsContent.classList.add('empty');
     ui.imageMeta.classList.add('hidden');
     syncClearButtons();
@@ -330,8 +342,13 @@ function renderCaptureDetails() {
     return;
   }
 
-  ui.captureTypeLabel.textContent =
-    state.capture.type === 'text' ? 'Text selection' : 'Screenshot';
+  if (state.capture.type === 'text') {
+    ui.captureTypeLabel.textContent = 'Text selection';
+  } else if (state.capture.type === 'image') {
+    ui.captureTypeLabel.textContent = 'Screenshot';
+  } else if (state.capture.type === 'url') {
+    ui.captureTypeLabel.textContent = 'URL';
+  }
   ui.timestampLabel.textContent = formatTimestamp(state.capture.timestamp);
 
   ui.detailsContent.classList.remove('empty');
@@ -341,6 +358,19 @@ function renderCaptureDetails() {
     const textNode = document.createElement('pre');
     textNode.textContent = state.capture.text || '';
     ui.detailsContent.appendChild(textNode);
+    ui.imageMeta.classList.add('hidden');
+  } else if (state.capture.type === 'url') {
+    const urlNode = document.createElement('div');
+    urlNode.style.wordBreak = 'break-all';
+    urlNode.style.fontFamily = 'inherit';
+    const link = document.createElement('a');
+    link.href = state.capture.url;
+    link.textContent = state.capture.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.style.color = 'var(--accent)';
+    urlNode.appendChild(link);
+    ui.detailsContent.appendChild(urlNode);
     ui.imageMeta.classList.add('hidden');
   } else {
     const img = document.createElement('img');

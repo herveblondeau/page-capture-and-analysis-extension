@@ -154,6 +154,8 @@ async function handleStartCapture(message) {
       throw new Error(region?.error || 'Region capture cancelled.');
     }
     capturePayload = await handleRegionImageCapture(tab, region.region);
+  } else if (mode === 'url') {
+    capturePayload = await captureUrl(tab);
   } else {
     await focusTabAndWindow(tab);
     capturePayload = await captureSelectedText(targetTabId);
@@ -185,6 +187,16 @@ async function captureSelectedText(tabId) {
   return {
     type: 'text',
     text
+  };
+}
+
+async function captureUrl(tab) {
+  if (!tab?.url) {
+    throw new Error('Unable to capture URL from current tab.');
+  }
+  return {
+    type: 'url',
+    url: tab.url
   };
 }
 
