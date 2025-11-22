@@ -97,6 +97,8 @@ async function init() {
   await hydrateSettings();
   await restoreState();
   syncAccordionState();
+  syncCaptureButton();
+  syncAnalyzeButton();
   chrome.storage.onChanged.addListener(handleStorageChange);
 }
 
@@ -125,6 +127,8 @@ function setMode(mode) {
   ui.modeButtons.forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.mode === mode);
   });
+  syncCaptureButton();
+  syncAnalyzeButton();
 }
 
 function toggleAccordion(section) {
@@ -147,6 +151,13 @@ async function handleCapture() {
     return;
   }
 
+  await handleCaptureForAnalyze();
+  if (state.capture?.type) {
+    setStatus('Capture saved.', 'success');
+  }
+}
+
+async function handleCaptureForAnalyze() {
   ui.captureButton.disabled = true;
   state.capturing = true;
   setStatus('Capturing…');
@@ -166,8 +177,10 @@ async function handleCapture() {
     state.accordion.result = false;
     syncAccordionState();
     renderCaptureDetails();
-    setStatus('Capture saved.', 'success');
   } catch (error) {
+    // Clear capture on failure to prevent using stale data
+    state.capture = null;
+    renderCaptureDetails();
     setStatus(error.message || 'Capture failed.', 'error');
   } finally {
     state.capturing = false;
@@ -180,7 +193,16 @@ async function handleAnalyze() {
   if (!ensureEndpointConfigured()) {
     return;
   }
-  if (!state.capture?.type) {
+
+  // For text and URL modes, always capture fresh content first
+  if (state.mode === 'text' || state.mode === 'url') {
+    await handleCaptureForAnalyze();
+    // If capture failed, stop here
+    if (!state.capture?.type) {
+      return;
+    }
+  } else if (!state.capture?.type) {
+    // For image mode, require existing capture
     setStatus('Capture something first.', 'error');
     return;
   }
@@ -398,13 +420,18 @@ function syncAnalyzeButton() {
     ui.analyzeButton.classList.add('cancel');
   } else {
     ui.analyzeButton.textContent = 'Analyze';
-    ui.analyzeButton.disabled =
-      !state.capture?.type || !hasEndpointConfigured();
+    // For text/URL modes, analyze button is enabled if endpoint is configured
+    // For image mode, need a capture first
+    const needsCapture = state.mode === 'image' && !state.capture?.type;
+    ui.analyzeButton.disabled = needsCapture || !hasEndpointConfigured() || state.capturing;
     ui.analyzeButton.classList.remove('cancel');
   }
 }
 
 function syncCaptureButton() {
+  // Hide capture button for text and URL modes
+  const shouldShow = state.mode === 'image';
+  ui.captureButton.style.display = shouldShow ? '' : 'none';
   ui.captureButton.disabled = state.capturing || state.analyzing || !hasEndpointConfigured();
 }
 

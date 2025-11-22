@@ -128,6 +128,10 @@ button.secondary {
   transition: opacity 0.2s ease;
 }
 
+button.secondary:only-child {
+  flex: 1;
+}
+
 button.primary {
   background: var(--accent);
   color: #ffffff;
