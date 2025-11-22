@@ -157,6 +157,12 @@ async function persistCapture(capture) {
 
 async function handleStartCapture(message) {
   const { mode, tabId: requestedTabId, instructions } = message;
+
+  // Clipboard mode is handled in popup script (clipboard API not available in service workers)
+  if (mode === 'clipboard') {
+    throw new Error('Clipboard mode should be handled in popup script');
+  }
+
   const targetTabId = await resolveTargetTabId(requestedTabId);
   const tab = await chrome.tabs.get(targetTabId);
   if (!tab) {
@@ -217,6 +223,7 @@ async function captureUrl(tab) {
     url: tab.url
   };
 }
+
 
 async function requestRegionCapture(tabId) {
   try {

@@ -176,17 +176,48 @@ async function handleCaptureForAnalyze() {
   state.capturing = true;
   setStatus('Capturing…');
   try {
-    const response = await chrome.runtime.sendMessage({
-      type: 'START_CAPTURE',
-      mode: state.mode,
-      instructions: state.instructions
-    });
+    let capture;
 
-    if (!response?.ok) {
-      throw new Error(response?.error || 'Capture failed.');
+    // Handle clipboard mode directly in popup (clipboard API not available in service workers)
+    if (state.mode === 'clipboard') {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text || !text.trim()) {
+          throw new Error('Clipboard is empty or contains no text');
+        }
+        capture = {
+          type: 'clipboard',
+          text: text.trim(),
+          instructions: state.instructions ?? '',
+          source: {
+            url: 'clipboard://',
+            title: 'Clipboard'
+          },
+          timestamp: new Date().toISOString()
+        };
+        // Save clipboard capture to storage
+        await saveLastCapture(withUpdatedTimestamp(capture));
+      } catch (error) {
+        if (error.name === 'NotAllowedError') {
+          throw new Error('Clipboard access denied. Please grant permission.');
+        }
+        throw new Error(error.message || 'Unable to read clipboard');
+      }
+    } else {
+      // Other modes go through background script
+      const response = await chrome.runtime.sendMessage({
+        type: 'START_CAPTURE',
+        mode: state.mode,
+        instructions: state.instructions
+      });
+
+      if (!response?.ok) {
+        throw new Error(response?.error || 'Capture failed.');
+      }
+      capture = response.capture;
     }
 
-    state.capture = response.capture;
+    state.capture = capture;
     state.accordion.selection = true;
     state.accordion.result = false;
     syncAccordionState();
@@ -212,8 +243,8 @@ async function handleAnalyze() {
     return;
   }
 
-  // For text and URL modes, always capture fresh content first
-  if (state.mode === 'text' || state.mode === 'url') {
+  // For text, URL, and clipboard modes, always capture fresh content first
+  if (state.mode === 'text' || state.mode === 'url' || state.mode === 'clipboard') {
     await handleCaptureForAnalyze();
     // If capture failed, stop here
     if (!state.capture?.type) {
@@ -239,8 +270,8 @@ async function handleAnalyze() {
   try {
     let response;
 
-    if (state.capture.type === 'text') {
-      // Text analysis: send as JSON to /text endpoint
+    if (state.capture.type === 'text' || state.capture.type === 'clipboard') {
+      // Text/clipboard analysis: send as JSON to /text endpoint
       const body = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
@@ -374,7 +405,7 @@ function renderCaptureDetails() {
     ui.captureTypeLabel.textContent = 'Selection';
     ui.timestampLabel.textContent = '';
     ui.detailsContent.textContent =
-      'Select text on the page, capture a screenshot region, or capture the page URL to get started.';
+      'Select text on the page, capture a screenshot region, capture the page URL, or use clipboard content to get started.';
     ui.detailsContent.classList.add('empty');
     ui.imageMeta.classList.add('hidden');
     syncClearButtons();
@@ -388,13 +419,15 @@ function renderCaptureDetails() {
     ui.captureTypeLabel.textContent = 'Screenshot';
   } else if (state.capture.type === 'url') {
     ui.captureTypeLabel.textContent = 'URL';
+  } else if (state.capture.type === 'clipboard') {
+    ui.captureTypeLabel.textContent = 'Clipboard';
   }
   ui.timestampLabel.textContent = formatTimestamp(state.capture.timestamp);
 
   ui.detailsContent.classList.remove('empty');
   ui.detailsContent.innerHTML = '';
 
-  if (state.capture.type === 'text') {
+  if (state.capture.type === 'text' || state.capture.type === 'clipboard') {
     const textNode = document.createElement('pre');
     textNode.textContent = state.capture.text || '';
     ui.detailsContent.appendChild(textNode);
@@ -447,7 +480,7 @@ function syncAnalyzeButton() {
 }
 
 function syncCaptureButton() {
-  // Hide capture button for text and URL modes
+  // Hide capture button for text, URL, and clipboard modes
   const shouldShow = state.mode === 'image';
   ui.captureButton.style.display = shouldShow ? '' : 'none';
   ui.captureButton.disabled = state.capturing || state.analyzing || !hasEndpointConfigured();
