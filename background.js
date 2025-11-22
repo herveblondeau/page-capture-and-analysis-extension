@@ -1,7 +1,9 @@
 import {
   loadLastCapture,
   saveLastCapture,
-  withUpdatedTimestamp
+  withUpdatedTimestamp,
+  loadWindowState,
+  saveWindowState
 } from './shared/storage.js';
 
 const WINDOW_DIMENSIONS = {
@@ -59,6 +61,18 @@ chrome.windows.onRemoved.addListener((windowId) => {
   }
 });
 
+chrome.windows.onBoundsChanged.addListener(async (window) => {
+  if (window.id === captureWindowId && window.state === 'normal') {
+    // Save position and size when window is moved or resized
+    await saveWindowState({
+      left: window.left,
+      top: window.top,
+      width: window.width,
+      height: window.height
+    });
+  }
+});
+
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   try {
     const tab = await chrome.tabs.get(tabId);
@@ -70,12 +84,27 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
 
 async function openCaptureWindow() {
   const url = chrome.runtime.getURL('popup/index.html');
-  const window = await chrome.windows.create({
+
+  // Load saved window state
+  const savedState = await loadWindowState();
+  const windowOptions = {
     url,
-    type: 'popup',
-    width: WINDOW_DIMENSIONS.width,
-    height: WINDOW_DIMENSIONS.height
-  });
+    type: 'popup'
+  };
+
+  if (savedState) {
+    // Use saved position and size
+    windowOptions.left = savedState.left;
+    windowOptions.top = savedState.top;
+    windowOptions.width = savedState.width;
+    windowOptions.height = savedState.height;
+  } else {
+    // Use default dimensions
+    windowOptions.width = WINDOW_DIMENSIONS.width;
+    windowOptions.height = WINDOW_DIMENSIONS.height;
+  }
+
+  const window = await chrome.windows.create(windowOptions);
   captureWindowId = window.id ?? null;
 }
 

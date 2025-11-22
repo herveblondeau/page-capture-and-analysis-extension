@@ -1,5 +1,6 @@
 const CAPTURE_STORAGE_KEY = 'pq:lastCapture';
 export const SETTINGS_STORAGE_KEY = 'pq:settings';
+const WINDOW_STATE_STORAGE_KEY = 'pq:windowState';
 
 export async function loadLastCapture() {
   const stored = await chrome.storage.local.get(CAPTURE_STORAGE_KEY);
@@ -28,4 +29,13 @@ export async function loadSettings() {
 
 export async function saveSettings(settings) {
   await chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings });
+}
+
+export async function loadWindowState() {
+  const stored = await chrome.storage.local.get(WINDOW_STATE_STORAGE_KEY);
+  return stored[WINDOW_STATE_STORAGE_KEY] ?? null;
+}
+
+export async function saveWindowState(windowState) {
+  await chrome.storage.local.set({ [WINDOW_STATE_STORAGE_KEY]: windowState });
 }
