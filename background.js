@@ -14,17 +14,6 @@ const WINDOW_DIMENSIONS = {
 let captureWindowId = null;
 let latestPageTabId = null;
 
-chrome.runtime.onInstalled.addListener(async () => {
-  const existing = await loadLastCapture();
-  if (!existing) {
-    await saveLastCapture(
-      withUpdatedTimestamp({
-        status: 'idle'
-      })
-    );
-  }
-});
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) {
     return;

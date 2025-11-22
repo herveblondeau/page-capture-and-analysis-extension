@@ -508,10 +508,6 @@ function buildEndpoint(path) {
   return new URL(base + path);
 }
 
-async function getActiveTab() {
-  return null;
-}
-
 async function handleClearCapture() {
   if (!state.capture) {
     return;
