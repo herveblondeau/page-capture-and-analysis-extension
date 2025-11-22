@@ -167,7 +167,7 @@ async function handleCapture() {
   ui.statusLabel.classList.add('hidden');
   await handleCaptureForAnalyze();
   if (state.capture?.type) {
-    setStatus('Capture saved.', 'success');
+    setStatus('Capture saved', 'success');
   }
 }
 
@@ -199,7 +199,7 @@ async function handleCaptureForAnalyze() {
     state.accordion.result = true;
     state.accordion.selection = false;
     syncAccordionState();
-    setStatus(error.message || 'Capture failed.', 'error');
+    setStatus(error.message || 'Capture failed', 'error');
   } finally {
     state.capturing = false;
     syncCaptureButton();
@@ -221,7 +221,7 @@ async function handleAnalyze() {
     }
   } else if (!state.capture?.type) {
     // For image mode, require existing capture
-    setStatus('Capture something first.', 'error');
+    setStatus('Capture something first', 'error');
     return;
   }
 
@@ -298,7 +298,7 @@ async function handleAnalyze() {
     const payload = await response.json();
     const success = payload?.success === true;
     const result =
-      payload?.result || (success ? 'Analysis complete.' : 'Analysis failed.');
+      payload?.result || (success ? 'Analysis complete' : 'Analysis failed.');
 
     state.capture = {
       ...state.capture,
@@ -312,16 +312,16 @@ async function handleAnalyze() {
 
     renderCaptureDetails();
     setStatus(
-      success ? 'Analysis complete.' : message,
+      success ? 'Analysis complete' : message,
       success ? 'success' : 'error',
       payload
     );
   } catch (error) {
     // Don't show error if it was a user cancellation
     if (error.name === 'AbortError') {
-      setStatus('Analysis cancelled.', 'warning');
+      setStatus('Analysis cancelled', 'warning');
     } else {
-      setStatus(error.message || 'Analyze failed.', 'error');
+      setStatus(error.message || 'Analyze failed', 'error');
     }
   } finally {
     state.analyzing = false;
@@ -555,7 +555,7 @@ async function handleCopyFullPageResult() {
     await navigator.clipboard.writeText(ui.fullPageContent.dataset.originalText);
     // Could show a temporary success indicator here if needed
   } catch (error) {
-    setStatus('Unable to copy result.', 'error');
+    setStatus('Unable to copy result', 'error');
   }
 }
 
@@ -588,7 +588,7 @@ async function handleClearCapture() {
   renderCaptureDetails();
   syncAnalyzeButton();
   syncClearButtons();
-  setStatus('Capture cleared.');
+  setStatus('Capture cleared');
 }
 
 async function handleClearInstructions() {
@@ -605,7 +605,7 @@ async function handleClearInstructions() {
     await saveLastCapture(withUpdatedTimestamp(state.capture));
   }
   syncClearButtons();
-  setStatus('Instructions cleared.');
+  setStatus('Instructions cleared');
 }
 
 function renderResult() {
@@ -613,7 +613,7 @@ function renderResult() {
     if (hasEndpointConfigured()) {
       setStatus(state.capture ? 'Ready' : 'Idle', 'neutral');
     } else {
-      setStatus('Set the analysis endpoint in Settings to begin.', 'error');
+      setStatus('Set the analysis endpoint in Settings to begin', 'error');
     }
     ui.fullPageViewButton.disabled = true;
     return;
@@ -621,7 +621,7 @@ function renderResult() {
 
   const { analyzeResult } = state.capture;
   if (analyzeResult.success) {
-    setStatus('Analysis complete.', 'success', analyzeResult.payload);
+    setStatus('Analysis complete', 'success', analyzeResult.payload);
     // fullPageViewButton is already enabled in setStatus
   } else {
     setStatus(analyzeResult.message, 'error');
@@ -636,9 +636,9 @@ async function handleCopyResult() {
   try {
     // Copy the original text (not the rendered HTML)
     await navigator.clipboard.writeText(ui.resultPayload.dataset.originalText);
-    setStatus('Result copied.', 'success', state.capture?.analyzeResult?.payload);
+    setStatus('Result copied', 'success', state.capture?.analyzeResult?.payload);
   } catch (error) {
-    setStatus('Unable to copy result.', 'error');
+    setStatus('Unable to copy result', 'error');
   }
 }
 
@@ -650,7 +650,7 @@ function ensureEndpointConfigured() {
   if (hasEndpointConfigured()) {
     return true;
   }
-  setStatus('Set the analysis endpoint in Settings to begin.', 'error');
+  setStatus('Set the analysis endpoint in Settings to begin', 'error');
   return false;
 }
 
@@ -660,7 +660,7 @@ async function hydrateSettings() {
   syncCaptureButton();
   syncAnalyzeButton();
   if (!hasEndpointConfigured()) {
-    setStatus('Set the analysis endpoint in Settings to begin.', 'error');
+    setStatus('Set the analysis endpoint in Settings to begin', 'error');
   }
 }
 
