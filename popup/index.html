@@ -71,6 +71,7 @@
             <span class="accordion-icon">▼</span>
             <span>Analysis result</span>
           </span>
+          <button id="fullPageViewButton" class="tertiary small" disabled onclick="event.stopPropagation()">Full page</button>
         </button>
         <div class="accordion-content">
           <span id="statusLabel">Idle</span>
@@ -79,6 +80,17 @@
         </div>
       </section>
     </main>
+
+    <div id="fullPageOverlay" class="full-page-overlay hidden">
+      <div class="full-page-header">
+        <span>Analysis result</span>
+        <button id="closeFullPageButton" class="close-button" type="button">×</button>
+      </div>
+      <div id="fullPageContent" class="full-page-content"></div>
+      <div class="full-page-footer">
+        <button id="copyFullPageButton" class="tertiary" disabled>Copy result</button>
+      </div>
+    </div>
 
     <script src="marked.min.js"></script>
     <script type="module" src="popup.js"></script>

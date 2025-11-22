@@ -40,6 +40,11 @@ const ui = {
   clearInstructionsButton: document.getElementById('clearInstructionsButton'),
   settingsButton: document.getElementById('openSettingsButton'),
   languageSelect: document.getElementById('languageSelect'),
+  fullPageViewButton: document.getElementById('fullPageViewButton'),
+  fullPageOverlay: document.getElementById('fullPageOverlay'),
+  fullPageContent: document.getElementById('fullPageContent'),
+  closeFullPageButton: document.getElementById('closeFullPageButton'),
+  copyFullPageButton: document.getElementById('copyFullPageButton'),
   accordionSections: {
     selection: document.querySelector('[data-section="selection"]'),
     instructions: document.querySelector('[data-section="instructions"]'),
@@ -68,6 +73,12 @@ async function init() {
   });
   ui.clearInstructionsButton.addEventListener('click', handleClearInstructions);
   ui.copyButton.addEventListener('click', handleCopyResult);
+  ui.fullPageViewButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openFullPageView();
+  });
+  ui.closeFullPageButton.addEventListener('click', closeFullPageView);
+  ui.copyFullPageButton.addEventListener('click', handleCopyFullPageResult);
   ui.settingsButton.addEventListener('click', () => chrome.runtime.openOptionsPage());
   ui.languageSelect.addEventListener('change', handleLanguageChange);
 
@@ -483,12 +494,50 @@ function setStatus(message, type = 'neutral', payload = null) {
     }
     ui.resultPayload.classList.remove('hidden');
     ui.copyButton.disabled = false;
+    ui.fullPageViewButton.disabled = false;
   } else {
     ui.resultPayload.textContent = '';
     ui.resultPayload.innerHTML = '';
     ui.resultPayload.dataset.originalText = '';
     ui.resultPayload.classList.add('hidden');
     ui.copyButton.disabled = true;
+    ui.fullPageViewButton.disabled = true;
+  }
+}
+
+function openFullPageView() {
+  // Copy the result content to full page view
+  if (ui.resultPayload.dataset.originalText) {
+    const result = ui.resultPayload.dataset.originalText;
+    // Render markdown if available
+    if (typeof marked !== 'undefined') {
+      ui.fullPageContent.innerHTML = marked.parse(result, {
+        breaks: true,
+        gfm: true
+      });
+    } else {
+      ui.fullPageContent.style.whiteSpace = 'pre-wrap';
+      ui.fullPageContent.textContent = result;
+    }
+    ui.fullPageContent.dataset.originalText = result;
+    ui.copyFullPageButton.disabled = false;
+  }
+  ui.fullPageOverlay.classList.remove('hidden');
+}
+
+function closeFullPageView() {
+  ui.fullPageOverlay.classList.add('hidden');
+}
+
+async function handleCopyFullPageResult() {
+  if (ui.copyFullPageButton.disabled || !ui.fullPageContent.dataset.originalText) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(ui.fullPageContent.dataset.originalText);
+    // Could show a temporary success indicator here if needed
+  } catch (error) {
+    setStatus('Unable to copy result.', 'error');
   }
 }
 
@@ -548,14 +597,17 @@ function renderResult() {
     } else {
       setStatus('Set the analysis endpoint in Settings to begin.', 'error');
     }
+    ui.fullPageViewButton.disabled = true;
     return;
   }
 
   const { analyzeResult } = state.capture;
   if (analyzeResult.success) {
     setStatus('Analysis complete.', 'success', analyzeResult.payload);
+    // fullPageViewButton is already enabled in setStatus
   } else {
     setStatus(analyzeResult.message, 'error');
+    ui.fullPageViewButton.disabled = true;
   }
 }
 
