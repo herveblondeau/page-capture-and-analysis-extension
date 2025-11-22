@@ -285,6 +285,41 @@ button:disabled {
   margin-left: 8px;
 }
 
+.status-inline {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 8px;
+}
+
+.status-inline.hidden {
+  display: none;
+}
+
+.accordion-section[data-section="result"].success .status-inline {
+  color: var(--success);
+}
+
+.accordion-section[data-section="result"].error .status-inline {
+  color: var(--error);
+}
+
+.accordion-section[data-section="result"].warning .status-inline {
+  color: var(--warning);
+}
+
+.error-status {
+  display: block;
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.error-status.hidden {
+  display: none;
+}
+
 .accordion-content {
   max-height: 1000px;
   overflow: hidden;

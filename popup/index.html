@@ -70,11 +70,12 @@
           <span class="accordion-title">
             <span class="accordion-icon">▼</span>
             <span>Analysis result</span>
+            <span id="statusLabel" class="status-inline hidden"></span>
           </span>
           <button id="fullPageViewButton" class="tertiary small" disabled onclick="event.stopPropagation()">Full page</button>
         </button>
         <div class="accordion-content">
-          <span id="statusLabel">Idle</span>
+          <span id="errorStatusLabel" class="error-status hidden"></span>
           <div id="resultPayload" class="result-payload hidden"></div>
           <button id="copyResultButton" class="tertiary" disabled>Copy result</button>
         </div>

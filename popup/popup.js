@@ -34,6 +34,7 @@ const ui = {
   imageMeta: document.getElementById('imageMeta'),
   instructionsInput: document.getElementById('instructionsInput'),
   statusLabel: document.getElementById('statusLabel'),
+  errorStatusLabel: document.getElementById('errorStatusLabel'),
   resultPayload: document.getElementById('resultPayload'),
   copyButton: document.getElementById('copyResultButton'),
   clearCaptureButton: document.getElementById('clearCaptureButton'),
@@ -162,6 +163,8 @@ async function handleCapture() {
     return;
   }
 
+  // Hide status message when starting a new capture
+  ui.statusLabel.classList.add('hidden');
   await handleCaptureForAnalyze();
   if (state.capture?.type) {
     setStatus('Capture saved.', 'success');
@@ -451,15 +454,30 @@ function syncCaptureButton() {
 }
 
 function setStatus(message, type = 'neutral', payload = null) {
-  ui.statusLabel.textContent = message;
   const resultSection = ui.accordionSections.result;
   resultSection.classList.remove('success', 'error', 'warning');
+
+  // For success, show message inline in header
   if (type === 'success') {
     resultSection.classList.add('success');
+    ui.statusLabel.textContent = message;
+    ui.statusLabel.classList.remove('hidden');
+    ui.errorStatusLabel.classList.add('hidden');
   } else if (type === 'error') {
+    // For errors, show in content area
     resultSection.classList.add('error');
+    ui.statusLabel.classList.add('hidden');
+    ui.errorStatusLabel.textContent = message;
+    ui.errorStatusLabel.classList.remove('hidden');
   } else if (type === 'warning') {
     resultSection.classList.add('warning');
+    ui.statusLabel.textContent = message;
+    ui.statusLabel.classList.remove('hidden');
+    ui.errorStatusLabel.classList.add('hidden');
+  } else {
+    // For neutral, hide both status labels
+    ui.statusLabel.classList.add('hidden');
+    ui.errorStatusLabel.classList.add('hidden');
   }
 
   if (type === 'success' && payload) {
