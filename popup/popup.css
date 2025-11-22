@@ -138,9 +138,29 @@ button.primary {
 }
 
 button.secondary {
+  background: #047857;
+  color: #ffffff;
+  border: 1px solid #047857;
+}
+
+button.secondary:disabled {
   background: var(--surface);
-  color: var(--fg);
+  color: var(--muted);
   border: 1px solid var(--border);
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  button.secondary {
+    background: #10b981;
+    border: 1px solid #10b981;
+  }
+
+  button.secondary:disabled {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
 }
 
 button.secondary.cancel {
