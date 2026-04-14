@@ -243,8 +243,8 @@ async function handleAnalyze() {
     return;
   }
 
-  // For text, URL, and clipboard modes, always capture fresh content first
-  if (state.mode === 'text' || state.mode === 'url' || state.mode === 'clipboard') {
+  // For text, URL, page, and clipboard modes, always capture fresh content first
+  if (state.mode === 'text' || state.mode === 'url' || state.mode === 'page' || state.mode === 'clipboard') {
     await handleCaptureForAnalyze();
     // If capture failed, stop here
     if (!state.capture?.type) {
@@ -270,8 +270,8 @@ async function handleAnalyze() {
   try {
     let response;
 
-    if (state.capture.type === 'text' || state.capture.type === 'clipboard') {
-      // Text/clipboard analysis: send as JSON to /text endpoint
+    if (state.capture.type === 'text' || state.capture.type === 'page' || state.capture.type === 'clipboard') {
+      // Text/page/clipboard analysis: send as JSON to /text endpoint
       const body = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
@@ -405,7 +405,7 @@ function renderCaptureDetails() {
     ui.captureTypeLabel.textContent = 'Selection';
     ui.timestampLabel.textContent = '';
     ui.detailsContent.textContent =
-      'Select text on the page, capture a screenshot region, capture the page URL, or use clipboard content to get started.';
+      'Select text on the page, capture a screenshot region, capture the page URL, capture page content, or use clipboard content to get started.';
     ui.detailsContent.classList.add('empty');
     ui.imageMeta.classList.add('hidden');
     syncClearButtons();
@@ -419,6 +419,8 @@ function renderCaptureDetails() {
     ui.captureTypeLabel.textContent = 'Screenshot';
   } else if (state.capture.type === 'url') {
     ui.captureTypeLabel.textContent = 'URL';
+  } else if (state.capture.type === 'page') {
+    ui.captureTypeLabel.textContent = 'Page';
   } else if (state.capture.type === 'clipboard') {
     ui.captureTypeLabel.textContent = 'Clipboard';
   }
@@ -427,7 +429,7 @@ function renderCaptureDetails() {
   ui.detailsContent.classList.remove('empty');
   ui.detailsContent.innerHTML = '';
 
-  if (state.capture.type === 'text' || state.capture.type === 'clipboard') {
+  if (state.capture.type === 'text' || state.capture.type === 'page' || state.capture.type === 'clipboard') {
     const textNode = document.createElement('pre');
     textNode.textContent = state.capture.text || '';
     ui.detailsContent.appendChild(textNode);
@@ -480,7 +482,7 @@ function syncAnalyzeButton() {
 }
 
 function syncCaptureButton() {
-  // Hide capture button for text, URL, and clipboard modes
+  // Hide capture button for text, URL, page, and clipboard modes
   const shouldShow = state.mode === 'image';
   ui.captureButton.style.display = shouldShow ? '' : 'none';
   ui.captureButton.disabled = state.capturing || state.analyzing || !hasEndpointConfigured();

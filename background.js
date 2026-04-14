@@ -170,20 +170,22 @@ async function handleStartCapture(message) {
   }
 
   let capturePayload;
-  if (mode === 'image') {
-    await focusTabAndWindow(tab);
-    const region = await requestRegionCapture(targetTabId);
-    if (!region?.ok) {
-      console.warn('[background] Region capture failed response', region);
-      throw new Error(region?.error || 'Region capture cancelled.');
+    if (mode === 'image') {
+      await focusTabAndWindow(tab);
+      const region = await requestRegionCapture(targetTabId);
+      if (!region?.ok) {
+        console.warn('[background] Region capture failed response', region);
+        throw new Error(region?.error || 'Region capture cancelled.');
+      }
+      capturePayload = await handleRegionImageCapture(tab, region.region);
+    } else if (mode === 'url') {
+      capturePayload = await captureUrl(tab);
+    } else if (mode === 'page') {
+      capturePayload = await capturePageContent(targetTabId);
+    } else {
+      await focusTabAndWindow(tab);
+      capturePayload = await captureSelectedText(targetTabId);
     }
-    capturePayload = await handleRegionImageCapture(tab, region.region);
-  } else if (mode === 'url') {
-    capturePayload = await captureUrl(tab);
-  } else {
-    await focusTabAndWindow(tab);
-    capturePayload = await captureSelectedText(targetTabId);
-  }
 
   const record = {
     ...capturePayload,
@@ -221,6 +223,39 @@ async function captureUrl(tab) {
   return {
     type: 'url',
     url: tab.url
+  };
+}
+
+async function capturePageContent(tabId) {
+  const [result] = await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => {
+      // Extract visible text content from the page
+      // Clone the body to avoid modifying the original
+      const clone = document.body.cloneNode(true);
+
+      // Remove script, style, and other non-visible elements
+      clone.querySelectorAll('script, style, noscript, iframe, embed, object, svg, canvas').forEach(el => el.remove());
+
+      // Get text content
+      const text = clone.innerText || clone.textContent || '';
+
+      // Clean up: remove excessive whitespace, normalize line breaks
+      return text
+        .replace(/\s+/g, ' ')  // Replace multiple whitespace with single space
+        .replace(/\n\s*\n/g, '\n\n')  // Normalize multiple newlines
+        .trim();
+    }
+  });
+
+  const text = (result?.result || '').trim();
+  if (!text) {
+    throw new Error('Page appears to be empty or could not extract content');
+  }
+
+  return {
+    type: 'text',
+    text
   };
 }
 
