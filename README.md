@@ -17,17 +17,26 @@ After capturing, you can optionally add instructions to guide the analysis, then
 ## Setup
 
 1. Load the extension in Chrome via `chrome://extensions` → **Load unpacked**, and select this directory.
-2. Open the extension **Settings** page and enter the base URL of your [Workflow](https://github.com/herveblondeau/Workflow) API instance's analysis route (e.g. `http://localhost:5000/api/analysis`).
+2. Open the extension **Settings** page and configure the fields below.
+
+### Settings
+
+| Setting                        | Description                                                                                                                                                                                                                                          |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Analysis endpoint base URL** | Base URL of your [Workflow](https://github.com/herveblondeau/Workflow) API instance, up to and including `/api` (e.g. `http://localhost:5261/api`).                                                                                                  |
+| **API key**                    | Sent as the `X-Api-Key` header with every request (set up in your [Workflow](https://github.com/herveblondeau/Workflow) API instance). Leave blank if not required.                                                                                  |
+| **Model**                      | **After** setting the analysis endpoint base URL and the API, key, click **Refresh** to fetch the list of available providers and models from the API, then select the provider and model to use for analysis. The selection is saved automatically. |
 
 ## API endpoints
 
 The extension communicates with the following routes on the configured base URL:
 
-| Capture mode          | Method | Route    | Format                |
-| --------------------- | ------ | -------- | --------------------- |
-| Text, Page, Clipboard | POST   | `/text`  | JSON                  |
-| URL                   | POST   | `/url`   | JSON                  |
-| Image                 | POST   | `/image` | `multipart/form-data` |
+| Capture mode          | Method | Route             | Format                |
+| --------------------- | ------ | ----------------- | --------------------- |
+| Text, Page, Clipboard | POST   | `/analysis/text`  | JSON                  |
+| URL                   | POST   | `/analysis/url`   | JSON                  |
+| Image                 | POST   | `/analysis/image` | `multipart/form-data` |
+| Model list (Settings) | GET    | `/system/models`  | —                     |
 
 ## Usage
 
