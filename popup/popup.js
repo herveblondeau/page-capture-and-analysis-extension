@@ -43,6 +43,8 @@ const ui = {
   clearCaptureButton: document.getElementById('clearCaptureButton'),
   clearInstructionsButton: document.getElementById('clearInstructionsButton'),
   settingsButton: document.getElementById('openSettingsButton'),
+  setupOverlay: document.getElementById('setupOverlay'),
+  openSettingsFromOverlay: document.getElementById('openSettingsFromOverlay'),
   languageSelect: document.getElementById('languageSelect'),
   fullPageViewButton: document.getElementById('fullPageViewButton'),
   fullPageOverlay: document.getElementById('fullPageOverlay'),
@@ -84,6 +86,7 @@ async function init() {
   ui.closeFullPageButton.addEventListener('click', closeFullPageView);
   ui.copyFullPageButton.addEventListener('click', handleCopyFullPageResult);
   ui.settingsButton.addEventListener('click', () => chrome.runtime.openOptionsPage());
+  ui.openSettingsFromOverlay.addEventListener('click', () => chrome.runtime.openOptionsPage());
   ui.languageSelect.addEventListener('change', handleLanguageChange);
 
   // Prevent accordion toggle when interacting with language select
@@ -486,7 +489,7 @@ function syncAnalyzeButton() {
     // For text/URL modes, analyze button is enabled if endpoint is configured
     // For image mode, need a capture first
     const needsCapture = state.mode === 'image' && !state.capture?.type;
-    ui.analyzeButton.disabled = needsCapture || !hasEndpointConfigured() || state.capturing;
+    ui.analyzeButton.disabled = needsCapture || !hasAllSettingsConfigured() || state.capturing;
     ui.analyzeButton.classList.remove('cancel');
   }
 }
@@ -495,7 +498,7 @@ function syncCaptureButton() {
   // Hide capture button for text, URL, page, and clipboard modes
   const shouldShow = state.mode === 'image';
   ui.captureButton.style.display = shouldShow ? '' : 'none';
-  ui.captureButton.disabled = state.capturing || state.analyzing || !hasEndpointConfigured();
+  ui.captureButton.disabled = state.capturing || state.analyzing || !hasAllSettingsConfigured();
 }
 
 function setStatus(message, type = 'neutral', payload = null) {
@@ -695,11 +698,15 @@ function hasEndpointConfigured() {
   return Boolean(state.endpoint);
 }
 
+function hasAllSettingsConfigured() {
+  return Boolean(state.endpoint) && Boolean(state.apiKey) && Boolean(state.providerId) && Boolean(state.modelId);
+}
+
 function ensureEndpointConfigured() {
-  if (hasEndpointConfigured()) {
+  if (hasAllSettingsConfigured()) {
     return true;
   }
-  setStatus('Set the analysis endpoint in Settings to begin', 'error');
+  setStatus('Configure all settings before analyzing', 'error');
   return false;
 }
 
@@ -709,11 +716,9 @@ async function hydrateSettings() {
   state.apiKey = settings?.apiKey?.trim() || '';
   state.providerId = settings?.providerId ?? '';
   state.modelId = settings?.modelId ?? '';
+  ui.setupOverlay.classList.toggle('hidden', hasAllSettingsConfigured());
   syncCaptureButton();
   syncAnalyzeButton();
-  if (!hasEndpointConfigured()) {
-    setStatus('Set the analysis endpoint in Settings to begin', 'error');
-  }
 }
 
 function handleStorageChange(changes, areaName) {

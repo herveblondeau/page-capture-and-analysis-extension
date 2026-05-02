@@ -553,6 +553,39 @@ button:disabled {
   font-weight: 600;
 }
 
+.setup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  text-align: center;
+}
+
+.setup-overlay.hidden {
+  display: none;
+}
+
+.setup-overlay p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.setup-overlay button {
+  flex: none;
+  width: auto;
+  padding: 10px 24px;
+}
+
 .full-page-overlay {
   position: fixed;
   top: 0;

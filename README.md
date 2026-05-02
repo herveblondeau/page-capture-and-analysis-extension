@@ -25,7 +25,7 @@ After capturing, you can optionally add instructions to guide the analysis, then
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Analysis endpoint base URL** | Base URL of your [Workflow](https://github.com/herveblondeau/Workflow) API instance, up to and including `/api` (e.g. `http://localhost:5261/api`).                                                                                                  |
 | **API key**                    | Sent as the `X-Api-Key` header with every request (set up in your [Workflow](https://github.com/herveblondeau/Workflow) API instance). Leave blank if not required.                                                                                  |
-| **Model**                      | **After** setting the analysis endpoint base URL and the API, key, click **Refresh** to fetch the list of available providers and models from the API, then select the provider and model to use for analysis. The selection is saved automatically. |
+| **Provider and model**         | **After** setting the analysis endpoint base URL and the API, key, click **Refresh** to fetch the list of available providers and models from the API, then select the provider and model to use for analysis. The selection is saved automatically. |
 
 ## API endpoints
 
