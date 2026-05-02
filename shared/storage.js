@@ -1,5 +1,6 @@
 const CAPTURE_STORAGE_KEY = 'pq:lastCapture';
 export const SETTINGS_STORAGE_KEY = 'pq:settings';
+const PROVIDERS_STORAGE_KEY = 'pq:providers';
 const WINDOW_STATE_STORAGE_KEY = 'pq:windowState';
 
 export async function loadLastCapture() {
@@ -29,6 +30,15 @@ export async function loadSettings() {
 
 export async function saveSettings(settings) {
   await chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings });
+}
+
+export async function loadProviders() {
+  const stored = await chrome.storage.local.get(PROVIDERS_STORAGE_KEY);
+  return stored[PROVIDERS_STORAGE_KEY] ?? null;
+}
+
+export async function saveProviders(providers) {
+  await chrome.storage.local.set({ [PROVIDERS_STORAGE_KEY]: providers });
 }
 
 export async function loadWindowState() {

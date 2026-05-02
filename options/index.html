@@ -20,10 +20,22 @@
             id="endpointInput"
             type="url"
             name="endpoint"
-            placeholder="https://api.example.com"
+            placeholder="http://localhost:5261/api"
             required
           />
-          <small class="hint">Text and image requests will be sent to <code>/text</code> and <code>/image</code> endpoints respectively.</small>
+          <small class="hint">Enter the base URL up to and including <code>/api</code>. Designed to work with the <a href="https://github.com/herveblondeau/Workflow" target="_blank" rel="noopener noreferrer">Workflow</a> API.</small>
+        </label>
+
+        <label>
+          <span>API key</span>
+          <input
+            id="apiKeyInput"
+            type="password"
+            name="apiKey"
+            placeholder="Your API key"
+            autocomplete="off"
+          />
+          <small class="hint">Sent as the <code>X-Api-Key</code> header with every request. Leave blank if not required.</small>
         </label>
 
         <div class="actions">
@@ -31,6 +43,28 @@
           <span id="optionsStatus" class="status"></span>
         </div>
       </form>
+
+      <section class="model-section">
+        <div class="model-section-header">
+          <h2>Model</h2>
+          <button id="refreshModelsButton" type="button">Refresh</button>
+        </div>
+        <span id="modelsStatus" class="status"></span>
+
+        <label>
+          <span>Provider</span>
+          <select id="providerSelect" disabled>
+            <option value="">— no providers loaded —</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Model</span>
+          <select id="modelSelect" disabled>
+            <option value="">— select a provider first —</option>
+          </select>
+        </label>
+      </section>
     </main>
 
     <script type="module" src="options.js"></script>

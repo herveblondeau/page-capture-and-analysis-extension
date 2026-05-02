@@ -15,6 +15,9 @@ const state = {
   instructions: '',
   capturing: false,
   endpoint: '',
+  apiKey: '',
+  providerId: '',
+  modelId: '',
   language: 'auto',
   abortController: null,
   accordion: {
@@ -275,12 +278,14 @@ async function handleAnalyze() {
       const body = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
+        provider: state.providerId || null,
+        model: state.modelId || null,
         text: state.capture.text
       };
 
-      response = await fetch(buildEndpoint('/text'), {
+      response = await fetch(buildEndpoint('/analysis/text'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...buildAuthHeaders() },
         body: JSON.stringify(body),
         signal: state.abortController.signal
       });
@@ -289,12 +294,14 @@ async function handleAnalyze() {
       const body = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
+        provider: state.providerId || null,
+        model: state.modelId || null,
         text: state.capture.url
       };
 
-      response = await fetch(buildEndpoint('/url'), {
+      response = await fetch(buildEndpoint('/analysis/url'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...buildAuthHeaders() },
         body: JSON.stringify(body),
         signal: state.abortController.signal
       });
@@ -305,6 +312,8 @@ async function handleAnalyze() {
       const metadata = {
         instructions: (state.instructions || '').trim(),
         language: state.language === 'auto' ? null : state.language,
+        provider: state.providerId || null,
+        model: state.modelId || null,
         cssWidth: state.capture.cssWidth,
         cssHeight: state.capture.cssHeight,
         pixelWidth: state.capture.pixelWidth,
@@ -315,8 +324,9 @@ async function handleAnalyze() {
       formData.append('metadata', JSON.stringify(metadata));
       formData.append('image', imageBlob, 'capture.png');
 
-      response = await fetch(buildEndpoint('/image'), {
+      response = await fetch(buildEndpoint('/analysis/image'), {
         method: 'POST',
+        headers: { ...buildAuthHeaders() },
         body: formData,
         signal: state.abortController.signal
       });
@@ -614,6 +624,10 @@ function buildEndpoint(path) {
   return new URL(base + path);
 }
 
+function buildAuthHeaders() {
+  return state.apiKey ? { 'X-Api-Key': state.apiKey } : {};
+}
+
 async function handleClearCapture() {
   if (!state.capture) {
     return;
@@ -692,6 +706,9 @@ function ensureEndpointConfigured() {
 async function hydrateSettings() {
   const settings = await loadSettings();
   state.endpoint = settings?.endpoint?.trim() || '';
+  state.apiKey = settings?.apiKey?.trim() || '';
+  state.providerId = settings?.providerId ?? '';
+  state.modelId = settings?.modelId ?? '';
   syncCaptureButton();
   syncAnalyzeButton();
   if (!hasEndpointConfigured()) {

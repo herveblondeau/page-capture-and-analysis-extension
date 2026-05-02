@@ -63,7 +63,9 @@ label {
   }
 }
 
-input[type='url'] {
+input[type='url'],
+input[type='password'],
+select {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(18, 20, 28, 0.2);
@@ -73,8 +75,15 @@ input[type='url'] {
   color: inherit;
 }
 
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (prefers-color-scheme: dark) {
-  input[type='url'] {
+  input[type='url'],
+  input[type='password'],
+  select {
     border-color: rgba(245, 246, 251, 0.2);
     background: #151826;
   }
@@ -90,6 +99,10 @@ input[type='url'] {
   .hint {
     color: rgba(245, 246, 251, 0.6);
   }
+}
+
+.hint a {
+  color: inherit;
 }
 
 .hint code {
@@ -139,4 +152,51 @@ input[type='url'] {
 
 .status.error {
   color: #dc2626;
+}
+
+.model-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(18, 20, 28, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  .model-section {
+    border-top-color: rgba(245, 246, 251, 0.12);
+  }
+}
+
+.model-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.model-section-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.model-section-header button {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(18, 20, 28, 0.2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .model-section-header button {
+    border-color: rgba(245, 246, 251, 0.2);
+  }
+}
+
+.model-section-header button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
