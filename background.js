@@ -93,7 +93,22 @@ async function openCaptureWindow() {
     windowOptions.height = WINDOW_DIMENSIONS.height;
   }
 
-  const window = await chrome.windows.create(windowOptions);
+  let window;
+  try {
+    window = await chrome.windows.create(windowOptions);
+  } catch (error) {
+    // Saved position/size can fall outside the current screen (e.g. monitor
+    // disconnected or resolution changed since it was saved), which Chrome
+    // rejects. Drop the stale state and retry with just the default size.
+    console.warn('[background] Failed to open capture window with saved bounds, retrying with defaults', error);
+    await saveWindowState(null);
+    window = await chrome.windows.create({
+      url,
+      type: 'popup',
+      width: WINDOW_DIMENSIONS.width,
+      height: WINDOW_DIMENSIONS.height
+    });
+  }
   captureWindowId = window.id ?? null;
 }
 
